@@ -512,8 +512,8 @@
 
       const cards = [
         { lbl: 'Vistas Totales', val: fmt(totalViews), badge: dv > 0 ? `+${fmt(dv)} 24h` : 'Live API', cls: dv > 0 ? '' : 'neutral', sub: `${chs.length} canal(es) medidos` },
-        { lbl: 'Subs & Seguidores', val: fmt(totalSubs), badge: ds > 0 ? `+${fmt(ds)} 24h` : 'Live API', cls: ds > 0 ? '' : 'neutral', sub: 'YouTube + IG + Facebook' },
-        { lbl: 'Piezas Publicadas', val: fmt(totalVids), badge: `${DATA.videos.filter(v => state.owner==='ALL'||v.owner===state.owner).length} recientes`, cls: 'neutral', sub: 'Shorts, largos 16:9 y Reels' },
+        { lbl: 'Subs & Seguidores', val: fmt(totalSubs), badge: ds > 0 ? `+${fmt(ds)} 24h` : 'Live API', cls: ds > 0 ? '' : 'neutral', sub: 'YouTube + TikTok + IG + FB' },
+        { lbl: 'Piezas Publicadas', val: fmt(totalVids), badge: `${DATA.videos.filter(v => state.owner==='ALL'||v.owner===state.owner).length} recientes`, cls: 'neutral', sub: 'Shorts, largos 16:9, Reels y TikToks' },
         { lbl: 'Mediana / Short', val: avgMed ? fmt(avgMed) : '—', badge: avgMed >= 500 ? 'Feed sano' : 'Arranque', cls: avgMed >= 500 ? '' : 'neutral', sub: 'Rendimiento típico reciente' },
         { lbl: 'Estado del Grupo', val: `${okN + launchN}/${chs.length}`, badge: warnN ? `${warnN} cooldown` : '100 % verde', cls: warnN ? 'neutral' : '', sub: `${okN} activos · ${launchN} estreno` },
       ];
@@ -667,14 +667,16 @@
         const maxS = Math.max(...spark, 1);
         const bars = spark.length
           ? spark.map((v) => `<div class="spark-bar" title="${fmt(v)} vistas" style="height:${Math.max(12, Math.round((v / maxS) * 100))}%;background:${c.accent}"></div>`).join('')
-          : `<div style="font-size:11px;color:var(--muted);padding-top:10px">Sin histórico de piezas aún (en estreno)</div>`;
+          : `<div style="font-size:11px;color:var(--muted);padding-top:10px">${esc(c.spark_note || 'Sin histórico de piezas aún (en estreno)')}</div>`;
         const avatarHtml = c.avatar
           ? `<img class="ch-avatar" src="${esc(c.avatar)}" alt="${esc(c.name)}" loading="lazy" />`
           : `<div class="ch-avatar-fallback" style="background:${c.accent}">${esc(c.name.slice(0,2).toUpperCase())}</div>`;
         const pillCls = c.status_level === 'ok' ? 'pill-ok' : c.status_level === 'warn' ? 'pill-warn' : 'pill-launch';
         const ownerIdx = Math.max(0, OWNERS.indexOf(c.owner)) % 2;
-        const retText = c.avg_retention_pct ? `${c.avg_retention_pct}%` : (c.median_short_views ? fmt(c.median_short_views) : '—');
-        const retLbl = c.avg_retention_pct ? 'Retención' : 'Med. Short';
+        const hasCustom = !!c.custom_stat_label;
+        const retText = hasCustom ? fmt(c.custom_stat_value) : (c.avg_retention_pct ? `${c.avg_retention_pct}%` : (c.median_short_views ? fmt(c.median_short_views) : '—'));
+        const retLbl = hasCustom ? c.custom_stat_label : (c.avg_retention_pct ? 'Retención' : 'Med. Short');
+        const viewsText = c.views_unavailable && !c.views ? '—' : fmt(c.views);
         return `
           <article class="ch-card">
             <div class="ch-accent" style="background:${c.accent}"></div>
@@ -691,9 +693,9 @@
             </div>
             <div class="ch-stats">
               <div class="st-box"><div class="st-num mono">${fmt(c.subs)}</div><div class="st-lbl">Subs</div></div>
-              <div class="st-box"><div class="st-num mono">${fmt(c.views)}</div><div class="st-lbl">Vistas</div></div>
+              <div class="st-box"><div class="st-num mono">${viewsText}</div><div class="st-lbl">Vistas</div></div>
               <div class="st-box"><div class="st-num mono">${fmt(c.videos)}</div><div class="st-lbl">Piezas</div></div>
-              <div class="st-box"><div class="st-num mono" style="color:${c.accent}">${retText}</div><div class="st-lbl">${retLbl}</div></div>
+              <div class="st-box"><div class="st-num mono" style="color:${c.accent}">${retText}</div><div class="st-lbl">${esc(retLbl)}</div></div>
             </div>
             <div>
               <div class="spark-caption"><span>Últimas piezas</span><span>${c.median_short_views ? 'Mediana Short: ' + fmt(c.median_short_views) + ' v' : esc(c.lang)}</span></div>
