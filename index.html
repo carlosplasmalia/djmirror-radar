@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <title>Panel Privado · Acceso Restringido</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #070911;
+      --bg-2: #0d1120;
+      --card: rgba(16, 21, 38, 0.84);
+      --card-solid: #11172b;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hi: rgba(46, 230, 214, 0.38);
+      --text: #f3f6ff;
+      --muted: #93a0c2;
+      --cyan: #2ee6d6;
+      --magenta: #ff4fa3;
+      --purple: #8b6cff;
+      --gold: #ffc83d;
+      --green: #34d399;
+      --red: #fb7185;
+      --orange: #f97316;
+      --blue: #3b82f6;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(900px 520px at 8% -10%, rgba(46, 230, 214, 0.14), transparent 60%),
+        radial-gradient(820px 480px at 94% 0%, rgba(255, 79, 163, 0.13), transparent 58%),
+        radial-gradient(700px 600px at 50% 100%, rgba(139, 108, 255, 0.10), transparent 65%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Auth Vault Gate */
+    .vault-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .vault-card {
+      width: 100%;
+      max-width: 430px;
+      background: rgba(13, 18, 34, 0.90);
+      border: 1px solid rgba(46, 230, 214, 0.22);
+      border-radius: 22px;
+      padding: 32px 28px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), 0 0 40px rgba(46, 230, 214, 0.08);
+      backdrop-filter: blur(18px);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .vault-badge {
+      display: inline-flex; align-items: center; gap: 7px; align-self: flex-start;
+      padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      letter-spacing: .04em; text-transform: uppercase;
+      background: rgba(46, 230, 214, 0.12); color: var(--cyan);
+      border: 1px solid rgba(46, 230, 214, 0.28);
+    }
+    .vault-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+    .vault-sub { font-size: 13.5px; color: var(--muted); }
+    .vault-form { display: flex; flex-direction: column; gap: 14px; }
+    .pw-wrap { position: relative; }
+    .pw-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--text);
+      padding: 13px 44px 13px 14px;
+      border-radius: 12px;
+      font: 600 15px/1.2 'JetBrains Mono', monospace;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .pw-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(46, 230, 214, 0.16); }
+    .pw-toggle {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      border: 0; background: transparent; color: var(--muted); cursor: pointer;
+      font-size: 16px; padding: 6px;
+    }
+    .pw-toggle:hover { color: var(--text); }
+    .vault-check {
+      display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--muted); cursor: pointer;
+      user-select: none;
+    }
+    .vault-check input { accent-color: var(--cyan); width: 16px; height: 16px; }
+    .vault-btn {
+      border: 0; border-radius: 12px; padding: 13px 16px; cursor: pointer;
+      font: 700 14px/1 inherit; color: #070911;
+      background: linear-gradient(135deg, var(--cyan), #6ee7f9 45%, var(--purple));
+      box-shadow: 0 8px 26px rgba(46, 230, 214, 0.25);
+      transition: transform .14s ease, filter .14s ease, opacity .14s ease;
+    }
+    .vault-btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
+    .vault-btn:disabled { opacity: 0.6; cursor: wait; transform: none; }
+    .vault-err {
+      font-size: 12.5px; color: var(--red); background: rgba(251, 113, 133, 0.11);
+      border: 1px solid rgba(251, 113, 133, 0.28); border-radius: 10px; padding: 10px 12px;
+    }
+    .vault-foot { font-size: 11.5px; color: var(--muted); opacity: 0.85; border-top: 1px solid var(--border); padding-top: 12px; }
+
+    /* Sticky Topbar */
+    header {
+      position: sticky; top: 0; z-index: 40;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: rgba(7, 9, 17, 0.78);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar {
+      max-width: 1360px; margin: 0 auto;
+      padding: 14px 20px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo-mark {
+      width: 38px; height: 38px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--cyan), var(--purple), var(--magenta));
+      display: grid; place-items: center; font-weight: 800; font-size: 16px; color: #070911;
+      box-shadow: 0 0 24px rgba(46, 230, 214, 0.35);
+    }
+    .brand h1 { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
+    .brand-sub { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+    .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 10px var(--green); display: inline-block;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.85); } }
+
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .seg {
+      display: inline-flex; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      padding: 3px; border-radius: 12px; gap: 2px;
+    }
+    .seg button {
+      border: 0; background: transparent; color: var(--muted);
+      padding: 7px 13px; border-radius: 9px; font: 600 13px/1 inherit; cursor: pointer;
+      transition: all .18s ease;
+    }
+    .seg button:hover { color: var(--text); }
+    .seg button.active {
+      background: linear-gradient(135deg, rgba(46,230,214,.22), rgba(139,108,255,.26));
+      color: var(--text); box-shadow: inset 0 0 0 1px rgba(46,230,214,.35);
+    }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 13px; border-radius: 11px; font: 600 13px/1 inherit;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text);
+      cursor: pointer; transition: border-color .18s, transform .15s;
+    }
+    .btn-ghost:hover { border-color: var(--border-hi); transform: translateY(-1px); }
+
+    main { max-width: 1360px; margin: 0 auto; padding: 24px 20px 64px; display: flex; flex-direction: column; gap: 26px; }
+
+    /* KPI Strip */
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px 20px; position: relative; overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+    .kpi-label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+    .kpi-val { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; margin-top: 8px; }
+    .kpi-foot { margin-top: 8px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .delta {
+      display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 999px;
+      font-size: 11px; font-weight: 700; background: rgba(52, 211, 153, 0.14); color: var(--green);
+    }
+    .delta.neutral { background: rgba(147,160,194,0.14); color: var(--muted); }
+
+    /* Charts Row */
+    .charts-grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 16px; }
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .section-title { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+    .chart-wrap { position: relative; height: 290px; width: 100%; }
+
+    /* Channel Cards */
+    .channels-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .ch-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; display: flex; flex-direction: column; gap: 14px;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+      position: relative;
+    }
+    .ch-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); box-shadow: 0 14px 36px rgba(0,0,0,0.38); }
+    .ch-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0; }
+    .ch-top { display: flex; align-items: center; gap: 12px; }
+    .ch-avatar {
+      width: 48px; height: 48px; border-radius: 14px; object-fit: cover; flex-shrink: 0;
+      background: #1a213b; border: 1px solid var(--border);
+    }
+    .ch-avatar-fallback {
+      width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+      display: grid; place-items: center; font-weight: 800; font-size: 18px; color: #070911;
+    }
+    .ch-meta { min-width: 0; flex: 1; }
+    .ch-name { font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ch-handle { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700;
+    }
+    .pill-owner-0 { background: rgba(46,230,214,0.13); color: var(--cyan); }
+    .pill-owner-1 { background: rgba(255,200,61,0.15); color: var(--gold); }
+    .pill-ok { background: rgba(52,211,153,0.14); color: var(--green); }
+    .pill-warn { background: rgba(255,200,61,0.15); color: var(--gold); }
+    .pill-launch { background: rgba(139,108,255,0.18); color: #c4b5fd; }
+
+    .ch-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .st-box {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 11px; padding: 9px 8px; text-align: center;
+    }
+    .st-num { font-size: 16px; font-weight: 800; }
+    .st-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; }
+
+    .spark-row { display: flex; align-items: flex-end; gap: 4px; height: 34px; padding: 4px 2px 0; }
+    .spark-bar {
+      flex: 1; border-radius: 4px 4px 2px 2px; min-height: 4px; opacity: 0.85;
+      transition: opacity .15s, transform .15s;
+    }
+    .spark-bar:hover { opacity: 1; transform: scaleY(1.08); }
+    .spark-caption { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+
+    .ch-foot {
+      border-top: 1px solid var(--border); padding-top: 10px;
+      font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px;
+    }
+    .ch-foot strong { color: var(--text); font-weight: 600; }
+
+    /* Video Gallery */
+    .video-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .vid-card {
+      background: rgba(255,255,255,0.025); border: 1px solid var(--border); border-radius: 14px;
+      overflow: hidden; display: flex; flex-direction: column;
+      transition: transform .16s ease, border-color .16s ease;
+    }
+    .vid-card:hover { transform: translateY(-2px); border-color: var(--border-hi); }
+    .vid-thumb-wrap { position: relative; aspect-ratio: 16 / 9; background: #0c1020; overflow: hidden; }
+    .vid-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .vid-badge {
+      position: absolute; top: 8px; left: 8px;
+      padding: 3px 8px; border-radius: 7px; font-size: 10px; font-weight: 800; letter-spacing: .04em;
+      background: rgba(7, 9, 17, 0.82); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.14);
+    }
+    .vid-dur {
+      position: absolute; bottom: 8px; right: 8px;
+      padding: 2px 6px; border-radius: 6px; font-size: 11px; font-weight: 700;
+      background: rgba(7, 9, 17, 0.84);
+    }
+    .vid-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .vid-title {
+      font-size: 13px; font-weight: 700; line-height: 1.35;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .vid-meta { margin-top: auto; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--muted); gap: 6px; }
+    .vid-views { color: var(--cyan); font-weight: 700; font-size: 12px; }
+
+    /* Operations Table Tabs */
+    .ops-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .search-input {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 12px; border-radius: 10px; font: 500 13px/1 inherit; min-width: 230px; outline: none;
+    }
+    .search-input:focus { border-color: var(--cyan); }
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th {
+      text-align: left; padding: 10px 9px; font-size: 10.5px; text-transform: uppercase;
+      letter-spacing: .05em; color: var(--muted); background: rgba(255,255,255,0.035);
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    td {
+      padding: 9px 9px; border-bottom: 1px solid rgba(255,255,255,0.045); vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: rgba(255,255,255,0.025); }
+
+    footer {
+      text-align: center; font-size: 12px; color: var(--muted); margin-top: 12px;
+      padding-top: 20px; border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 1120px) {
+      .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .charts-grid { grid-template-columns: 1fr; }
+      .channels-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .video-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 680px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .channels-grid { grid-template-columns: 1fr; }
+      .video-grid { grid-template-columns: 1fr; }
+      .kpi-val { font-size: 24px; }
+      .search-input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Encrypted Lock Gate (zero internal data in HTML until AES-256-GCM decrypted) -->
+  <section id="vaultGate" class="vault-screen">
+    <div class="vault-card">
+      <div class="vault-badge">🔒 Cifrado AES-256-GCM</div>
+      <div>
+        <h2 class="vault-title">Panel Privado</h2>
+        <p class="vault-sub">Introduce la clave de acceso para descifrar las métricas en tu navegador.</p>
+      </div>
+      <form id="vaultForm" class="vault-form" autocomplete="on">
+        <div class="pw-wrap">
+          <input id="vaultPass" class="pw-input" type="password" placeholder="Clave de acceso..." autocomplete="current-password" required autofocus />
+          <button type="button" id="pwToggle" class="pw-toggle" aria-label="Mostrar clave">👁</button>
+        </div>
+        <label class="vault-check">
+          <input id="vaultRemember" type="checkbox" checked />
+          <span>Recordar en este dispositivo</span>
+        </label>
+        <div id="vaultErr" class="vault-err" hidden></div>
+        <button id="vaultSubmit" class="vault-btn" type="submit">Desbloquear panel</button>
+      </form>
+      <div class="vault-foot">
+        Los datos están cifrados de extremo a extremo antes de publicarse. Sin la clave no se puede leer ninguna métrica ni tabla.
+      </div>
+    </div>
+  </section>
+
+  <div id="appShell" hidden>
+    <header>
+      <div class="topbar">
+        <div class="brand">
+          <div class="logo-mark" id="brandShort">--</div>
+          <div>
+            <h1 id="brandTitle">Panel Privado</h1>
+            <div class="brand-sub"><span class="pulse-dot"></span> <span id="updatedAt">Cargando...</span></div>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="seg" id="ownerFilter"></div>
+          <a id="sheetLink" class="btn-ghost" href="#" target="_blank" rel="noopener">📊 Google Sheet</a>
+          <button id="lockBtn" class="btn-ghost" type="button" title="Bloquear y olvidar clave">🔒 Bloquear</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="kpi-grid" id="kpiGrid"></section>
+
+      <section class="charts-grid">
+        <div class="card">
+          <div class="section-head">
+            <div class="section-title">📈 Evolución y Pulso del Feed</div>
+            <div class="seg" id="evoTabs">
+              <button class="active" data-mode="daily30">Últimos 14d</button>
+              <button data-mode="pubs">Lanzamientos</button>
+              <button data-mode="history">Histórico</button>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="evoChart"></canvas></div>
+        </div>
+
+        <div class="card">
+          <div class="section-head">
+            <div class="section-title">⚡ Comparativa por Canal</div>
+            <div class="seg" id="cmpTabs">
+              <button class="active" data-metric="views">Vistas</button>
+              <button data-metric="median">Mediana Short</button>
+              <button data-metric="subs">Subs</button>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="cmpChart"></canvas></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <div class="section-title">📡 Canales Activos y Estrenos</div>
+          <span style="font-size:12px;color:var(--muted)" id="channelCountNote"></span>
+        </div>
+        <div class="channels-grid" id="channelsGrid"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div class="section-title">🎬 Rendimiento de Vídeos y Reels</div>
+          <div class="controls">
+            <select id="vidChannelSelect" class="search-input" style="min-width:170px">
+              <option value="ALL">Todos los canales</option>
+            </select>
+            <div class="seg" id="vidSortTabs">
+              <button class="active" data-sort="views">🔥 Top vistas</button>
+              <button data-sort="recent">🕒 Recientes</button>
+              <button data-sort="long">📺 Largos 16:9</button>
+            </div>
+          </div>
+        </div>
+        <div class="video-grid" id="videoGrid"></div>
+      </section>
+
+      <section class="card">
+        <div class="ops-toolbar">
+          <div class="seg" id="opsTabs">
+            <button class="active" data-op="calendar">📅 Calendario & Cola</button>
+            <button data-op="anti_overlap">🗺️ Mapa Anti-Solape</button>
+            <button data-op="experiments">🧪 Experimentos</button>
+            <button data-op="roadmap">🚀 Producto & Hitos</button>
+          </div>
+          <input id="opsSearch" class="search-input" type="search" placeholder="Buscar tema, canal o experimento..." />
+        </div>
+        <div class="table-wrap" id="opsTableWrap"></div>
+      </section>
+
+      <footer id="footerText"></footer>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'radar_vault_key_v1';
+    const fmt = (n) => Number(n || 0).toLocaleString('es-ES');
+    const fmtDur = (s) => {
+      s = Number(s || 0);
+      if (!s) return '—';
+      const m = Math.floor(s / 60), r = s % 60;
+      return m ? `${m}:${String(r).padStart(2, '0')}` : `${r}s`;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const linkify = (s) => esc(s).replace(/(https?:\/\/[^\s)]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:underline">$1</a>');
+
+    let ENVELOPE = null;
+    let DATA = null;
+    let OWNERS = [];
+    let BOUND = false;
+    let state = { owner: 'ALL', evoMode: 'daily30', cmpMetric: 'views', vidChannel: 'ALL', vidSort: 'views', opTab: 'calendar', opSearch: '' };
+    let evoChart = null, cmpChart = null;
+
+    function b64ToBytes(b64) {
+      const bin = atob(b64);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out;
+    }
+
+    async function decryptEnvelope(env, password) {
+      const enc = new TextEncoder();
+      const keyMat = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+      const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: b64ToBytes(env.salt), iterations: env.iter || 310000, hash: 'SHA-256' },
+        keyMat,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt']
+      );
+      const plainBuf = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: b64ToBytes(env.iv) },
+        key,
+        b64ToBytes(env.ct)
+      );
+      return JSON.parse(new TextDecoder().decode(plainBuf));
+    }
+
+    function filteredChannels() {
+      return DATA.channels.filter((c) => state.owner === 'ALL' || c.owner === state.owner);
+    }
+    function filteredVideos() {
+      let list = DATA.videos.filter((v) => state.owner === 'ALL' || v.owner === state.owner);
+      if (state.vidChannel !== 'ALL') list = list.filter((v) => v.channel_key === state.vidChannel);
+      if (state.vidSort === 'long') list = list.filter((v) => v.format !== 'Short' && v.format !== 'Reel');
+      if (state.vidSort === 'recent') list = [...list].sort((a, b) => (b.published_at || '').localeCompare(a.published_at || '') || b.views - a.views);
+      else list = [...list].sort((a, b) => b.views - a.views);
+      return list.slice(0, 12);
+    }
+
+    function renderKPIs() {
+      const chs = filteredChannels();
+      const totalViews = chs.reduce((a, c) => a + c.views, 0);
+      const totalSubs = chs.reduce((a, c) => a + c.subs, 0);
+      const totalVids = chs.reduce((a, c) => a + c.videos, 0);
+      const activeMedians = chs.map((c) => c.median_short_views).filter((x) => x > 0);
+      const avgMed = activeMedians.length ? Math.round(activeMedians.reduce((a, b) => a + b, 0) / activeMedians.length) : 0;
+      const okN = chs.filter((c) => c.status_level === 'ok').length;
+      const launchN = chs.filter((c) => c.status_level === 'launch').length;
+      const warnN = chs.filter((c) => c.status_level === 'warn').length;
+
+      const d = DATA.summary?.deltas || {};
+      const dv = state.owner === 'ALL' ? (d.views || 0) : chs.reduce((a, c) => a + (d.by_channel?.[c.key]?.views || 0), 0);
+      const ds = state.owner === 'ALL' ? (d.subs || 0) : chs.reduce((a, c) => a + (d.by_channel?.[c.key]?.subs || 0), 0);
+
+      const cards = [
+        { lbl: 'Vistas Totales', val: fmt(totalViews), badge: dv > 0 ? `+${fmt(dv)} 24h` : 'Live API', cls: dv > 0 ? '' : 'neutral', sub: `${chs.length} canal(es) medidos` },
+        { lbl: 'Subs & Seguidores', val: fmt(totalSubs), badge: ds > 0 ? `+${fmt(ds)} 24h` : 'Live API', cls: ds > 0 ? '' : 'neutral', sub: 'YouTube + IG + Facebook' },
+        { lbl: 'Piezas Publicadas', val: fmt(totalVids), badge: `${DATA.videos.filter(v => state.owner==='ALL'||v.owner===state.owner).length} recientes`, cls: 'neutral', sub: 'Shorts, largos 16:9 y Reels' },
+        { lbl: 'Mediana / Short', val: avgMed ? fmt(avgMed) : '—', badge: avgMed >= 500 ? 'Feed sano' : 'Arranque', cls: avgMed >= 500 ? '' : 'neutral', sub: 'Rendimiento típico reciente' },
+        { lbl: 'Estado del Grupo', val: `${okN + launchN}/${chs.length}`, badge: warnN ? `${warnN} cooldown` : '100 % verde', cls: warnN ? 'neutral' : '', sub: `${okN} activos · ${launchN} estreno` },
+      ];
+      document.getElementById('kpiGrid').innerHTML = cards.map((k) => `
+        <div class="card">
+          <div class="kpi-label">${k.lbl}</div>
+          <div class="kpi-val mono">${k.val}</div>
+          <div class="kpi-foot"><span class="delta ${k.cls}">${k.badge}</span><span>${k.sub}</span></div>
+        </div>
+      `).join('');
+    }
+
+    function renderEvoChart() {
+      const ctx = document.getElementById('evoChart');
+      if (evoChart) evoChart.destroy();
+      const chs = filteredChannels();
+      const allowedKeys = new Set(chs.map((c) => c.key));
+
+      if (state.evoMode === 'daily30') {
+        const datesSet = new Set();
+        Object.entries(DATA.daily_analytics || {}).forEach(([k, rows]) => {
+          if (allowedKeys.has(k)) rows.forEach((r) => datesSet.add(r.date));
+        });
+        const pubByDateCh = {};
+        DATA.videos.forEach((v) => {
+          if (!allowedKeys.has(v.channel_key) || !v.published_at) return;
+          if (!DATA.daily_analytics?.[v.channel_key]?.length) {
+            datesSet.add(v.published_at);
+            pubByDateCh[v.channel_key] = pubByDateCh[v.channel_key] || {};
+            pubByDateCh[v.channel_key][v.published_at] = (pubByDateCh[v.channel_key][v.published_at] || 0) + v.views;
+          }
+        });
+        const labels = [...datesSet].sort().slice(-14);
+        const datasets = [];
+        chs.forEach((c) => {
+          const ana = DATA.daily_analytics?.[c.key];
+          if (ana && ana.some((r) => r.views > 0)) {
+            const byD = Object.fromEntries(ana.map((r) => [r.date, r.views]));
+            datasets.push({
+              label: `${c.handle} (vistas/día)`,
+              data: labels.map((d) => byD[d] ?? null),
+              borderColor: c.accent,
+              backgroundColor: c.accent + '22',
+              fill: true, tension: 0.35, borderWidth: 2.5, pointRadius: 3.5, spanGaps: true,
+            });
+          } else if (pubByDateCh[c.key]) {
+            datasets.push({
+              label: `${c.handle} (vistas por fecha subida)`,
+              data: labels.map((d) => pubByDateCh[c.key][d] || 0),
+              borderColor: c.accent,
+              backgroundColor: c.accent + '22',
+              fill: false, tension: 0.3, borderDash: [5, 4], borderWidth: 2.2, pointRadius: 3.5,
+            });
+          }
+        });
+        evoChart = new Chart(ctx, {
+          type: 'line',
+          data: { labels: labels.map((d) => d.slice(5)), datasets },
+          options: chartOpts('Vistas')
+        });
+      } else if (state.evoMode === 'pubs') {
+        const vids = DATA.videos
+          .filter((v) => allowedKeys.has(v.channel_key))
+          .slice(0, 18)
+          .reverse();
+        const chMap = Object.fromEntries(DATA.channels.map((c) => [c.key, c]));
+        evoChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: vids.map((v) => (v.title.length > 18 ? v.title.slice(0, 18) + '…' : v.title)),
+            datasets: [{
+              label: 'Vistas por pieza',
+              data: vids.map((v) => v.views),
+              backgroundColor: vids.map((v) => (chMap[v.channel_key]?.accent || '#2ee6d6') + 'cc'),
+              borderRadius: 7,
+            }]
+          },
+          options: chartOpts('Vistas')
+        });
+      } else {
+        const hist = DATA.history || [];
+        const labels = hist.map((h) => h.date.slice(5));
+        const datasets = chs.map((c) => ({
+          label: c.handle,
+          data: hist.map((h) => h.by_channel?.[c.key]?.views ?? 0),
+          borderColor: c.accent,
+          backgroundColor: c.accent + '22',
+          tension: 0.3, borderWidth: 2.5, pointRadius: 4,
+        }));
+        evoChart = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets },
+          options: chartOpts('Vistas acumuladas')
+        });
+      }
+    }
+
+    function renderCmpChart() {
+      const ctx = document.getElementById('cmpChart');
+      if (cmpChart) cmpChart.destroy();
+      const chs = filteredChannels();
+      const getVal = (c) => state.cmpMetric === 'subs' ? c.subs : state.cmpMetric === 'median' ? c.median_short_views : c.views;
+      const sorted = [...chs].sort((a, b) => getVal(b) - getVal(a));
+      const base = chartOpts('');
+      cmpChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sorted.map((c) => c.handle),
+          datasets: [{
+            label: state.cmpMetric === 'subs' ? 'Suscriptores' : state.cmpMetric === 'median' ? 'Mediana / Short' : 'Vistas totales',
+            data: sorted.map(getVal),
+            backgroundColor: sorted.map((c) => c.accent),
+            borderRadius: 8,
+            maxBarThickness: 26,
+          }]
+        },
+        options: {
+          ...base,
+          indexAxis: 'y',
+          plugins: { ...base.plugins, legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#93a0c2', font: { size: 11 } } },
+            y: { grid: { display: false }, ticks: { color: '#e6ecff', font: { size: 12, weight: '600' } } }
+          }
+        }
+      });
+    }
+
+    function chartOpts(yLabel) {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#cbd5f5', boxWidth: 10, usePointStyle: true, font: { family: 'Plus Jakarta Sans', size: 12 } } },
+          tooltip: { backgroundColor: '#0e1326', borderColor: 'rgba(255,255,255,0.14)', borderWidth: 1, titleColor: '#fff', bodyColor: '#cbd5f5', padding: 10 }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#93a0c2', font: { size: 11 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#93a0c2', font: { size: 11 } }, title: { display: !!yLabel, text: yLabel, color: '#93a0c2' } }
+        }
+      };
+    }
+
+    function renderChannels() {
+      const chs = filteredChannels();
+      document.getElementById('channelCountNote').textContent = `${chs.length} canal(es) conectados`;
+      document.getElementById('channelsGrid').innerHTML = chs.map((c) => {
+        const spark = c.recent_spark || [];
+        const maxS = Math.max(...spark, 1);
+        const bars = spark.length
+          ? spark.map((v) => `<div class="spark-bar" title="${fmt(v)} vistas" style="height:${Math.max(12, Math.round((v / maxS) * 100))}%;background:${c.accent}"></div>`).join('')
+          : `<div style="font-size:11px;color:var(--muted);padding-top:10px">Sin histórico de piezas aún (en estreno)</div>`;
+        const avatarHtml = c.avatar
+          ? `<img class="ch-avatar" src="${esc(c.avatar)}" alt="${esc(c.name)}" loading="lazy" />`
+          : `<div class="ch-avatar-fallback" style="background:${c.accent}">${esc(c.name.slice(0,2).toUpperCase())}</div>`;
+        const pillCls = c.status_level === 'ok' ? 'pill-ok' : c.status_level === 'warn' ? 'pill-warn' : 'pill-launch';
+        const ownerIdx = Math.max(0, OWNERS.indexOf(c.owner)) % 2;
+        const retText = c.avg_retention_pct ? `${c.avg_retention_pct}%` : (c.median_short_views ? fmt(c.median_short_views) : '—');
+        const retLbl = c.avg_retention_pct ? 'Retención' : 'Med. Short';
+        return `
+          <article class="ch-card">
+            <div class="ch-accent" style="background:${c.accent}"></div>
+            <div class="ch-top">
+              ${avatarHtml}
+              <div class="ch-meta">
+                <div class="ch-name"><a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)} ↗</a></div>
+                <div class="ch-handle">
+                  <span>${esc(c.handle)}</span>
+                  <span class="pill pill-owner-${ownerIdx}">${esc(c.owner)}</span>
+                  <span class="pill ${pillCls}">${esc(c.status)}</span>
+                </div>
+              </div>
+            </div>
+            <div class="ch-stats">
+              <div class="st-box"><div class="st-num mono">${fmt(c.subs)}</div><div class="st-lbl">Subs</div></div>
+              <div class="st-box"><div class="st-num mono">${fmt(c.views)}</div><div class="st-lbl">Vistas</div></div>
+              <div class="st-box"><div class="st-num mono">${fmt(c.videos)}</div><div class="st-lbl">Piezas</div></div>
+              <div class="st-box"><div class="st-num mono" style="color:${c.accent}">${retText}</div><div class="st-lbl">${retLbl}</div></div>
+            </div>
+            <div>
+              <div class="spark-caption"><span>Últimas piezas</span><span>${c.median_short_views ? 'Mediana Short: ' + fmt(c.median_short_views) + ' v' : esc(c.lang)}</span></div>
+              <div class="spark-row">${bars}</div>
+            </div>
+            <div class="ch-foot">
+              <div><strong>Cadencia:</strong> ${esc(c.cadence)}</div>
+              <div><strong>Siguiente:</strong> ${esc(c.next_action)}</div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function populateVideoFilter() {
+      const sel = document.getElementById('vidChannelSelect');
+      const chs = filteredChannels();
+      const prev = state.vidChannel;
+      sel.innerHTML = `<option value="ALL">Todos los canales (${chs.length})</option>` +
+        chs.map((c) => `<option value="${esc(c.key)}">${esc(c.handle)} (${esc(c.owner)})</option>`).join('');
+      if ([...sel.options].some((o) => o.value === prev)) sel.value = prev;
+      else { sel.value = 'ALL'; state.vidChannel = 'ALL'; }
+    }
+
+    function renderVideos() {
+      const list = filteredVideos();
+      const el = document.getElementById('videoGrid');
+      if (!list.length) {
+        el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:12px 0">No hay piezas publicadas para este filtro todavía.</div>`;
+        return;
+      }
+      el.innerHTML = list.map((v) => `
+        <a class="vid-card" href="${esc(v.url)}" target="_blank" rel="noopener">
+          <div class="vid-thumb-wrap">
+            ${v.thumb ? `<img class="vid-thumb" src="${esc(v.thumb)}" alt="${esc(v.title)}" loading="lazy" />` : ''}
+            <span class="vid-badge">${esc(v.format.toUpperCase())} · ${esc(v.handle)}</span>
+            <span class="vid-dur mono">${fmtDur(v.duration_s)}</span>
+          </div>
+          <div class="vid-body">
+            <div class="vid-title">${esc(v.title)}</div>
+            <div class="vid-meta">
+              <span class="vid-views mono">${fmt(v.views)} vistas</span>
+              <span>👍 ${fmt(v.likes)} · 💬 ${fmt(v.comments)} · ${esc(v.published_at)}</span>
+            </div>
+          </div>
+        </a>
+      `).join('');
+    }
+
+    function renderOps() {
+      const ownerKeywords = (owner) => {
+        const chs = DATA.channels.filter((c) => c.owner === owner);
+        return [owner, ...chs.map((c) => c.handle.replace(/^@/, '')), ...chs.map((c) => c.name)]
+          .map((s) => s.toLowerCase())
+          .filter((s) => s.length >= 3);
+      };
+      const rows = (DATA.ops?.[state.opTab] || []).filter((r) => {
+        if (state.owner !== 'ALL') {
+          const joined = Object.values(r).join(' ').toLowerCase();
+          const mine = ownerKeywords(state.owner).some((kw) => joined.includes(kw));
+          const others = OWNERS.filter((o) => o !== state.owner).some((o) =>
+            ownerKeywords(o).some((kw) => joined.includes(kw))
+          );
+          if (!mine && others) return false;
+          if (!mine && state.owner !== OWNERS[0]) return false;
+        }
+        if (state.opSearch) {
+          const q = state.opSearch.toLowerCase();
+          return Object.values(r).some((v) => String(v).toLowerCase().includes(q));
+        }
+        return true;
+      });
+      const wrap = document.getElementById('opsTableWrap');
+      if (!rows.length) {
+        wrap.innerHTML = `<div style="padding:18px;color:var(--muted);font-size:13px">Sin filas que coincidan con el filtro.</div>`;
+        return;
+      }
+      const cols = Object.keys(rows[0]);
+      wrap.innerHTML = `
+        <table>
+          <thead><tr>${cols.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${rows.map((r) => `<tr>${cols.map((c) => `<td>${linkify(r[c])}</td>`).join('')}</tr>`).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderAll() {
+      renderKPIs();
+      renderEvoChart();
+      renderCmpChart();
+      renderChannels();
+      populateVideoFilter();
+      renderVideos();
+      renderOps();
+    }
+
+    function bindSeg(id, prop, cb) {
+      document.getElementById(id).addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        document.querySelectorAll(`#${id} button`).forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        state[prop] = Object.values(btn.dataset)[0];
+        cb();
+      });
+    }
+
+    function openDashboard(decrypted) {
+      DATA = decrypted;
+      OWNERS = [...new Set((DATA.channels || []).map((c) => c.owner).filter(Boolean))];
+      document.title = DATA.brand_title || 'Panel Privado';
+      document.getElementById('brandTitle').textContent = DATA.brand_title || 'Panel Privado';
+      document.getElementById('brandShort').textContent = DATA.brand_short || 'MC';
+      document.getElementById('footerText').textContent = DATA.footer_text || '';
+      document.getElementById('updatedAt').textContent = `Actualizado: ${DATA.updated_at}`;
+      document.getElementById('sheetLink').href = DATA.sheet_url || '#';
+
+      document.getElementById('ownerFilter').innerHTML =
+        `<button class="active" data-owner="ALL">Todos</button>` +
+        OWNERS.map((o) => `<button data-owner="${esc(o)}">${esc(o)}</button>`).join('');
+
+      if (!BOUND) {
+        BOUND = true;
+        bindSeg('ownerFilter', 'owner', renderAll);
+        bindSeg('evoTabs', 'evoMode', renderEvoChart);
+        bindSeg('cmpTabs', 'cmpMetric', renderCmpChart);
+        bindSeg('vidSortTabs', 'vidSort', renderVideos);
+        bindSeg('opsTabs', 'opTab', renderOps);
+        document.getElementById('vidChannelSelect').addEventListener('change', (e) => { state.vidChannel = e.target.value; renderVideos(); });
+        document.getElementById('opsSearch').addEventListener('input', (e) => { state.opSearch = e.target.value.trim(); renderOps(); });
+        document.getElementById('lockBtn').addEventListener('click', lockDashboard);
+      }
+
+      document.getElementById('vaultGate').hidden = true;
+      document.getElementById('appShell').hidden = false;
+      renderAll();
+    }
+
+    function lockDashboard() {
+      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
+      DATA = null;
+      if (evoChart) { evoChart.destroy(); evoChart = null; }
+      if (cmpChart) { cmpChart.destroy(); cmpChart = null; }
+      document.title = 'Panel Privado · Acceso Restringido';
+      document.getElementById('appShell').hidden = true;
+      document.getElementById('vaultGate').hidden = false;
+      document.getElementById('vaultPass').value = '';
+      document.getElementById('vaultErr').hidden = true;
+      document.getElementById('vaultPass').focus();
+    }
+
+    async function tryUnlock(password, remember) {
+      const errEl = document.getElementById('vaultErr');
+      const btn = document.getElementById('vaultSubmit');
+      errEl.hidden = true;
+      btn.disabled = true;
+      btn.textContent = 'Descifrando...';
+      try {
+        if (!ENVELOPE) {
+          const resp = await fetch('./data/dashboard.enc.json?v=' + Date.now());
+          if (!resp.ok) throw new Error('No se pudo cargar el archivo cifrado.');
+          ENVELOPE = await resp.json();
+        }
+        const decrypted = await decryptEnvelope(ENVELOPE, password.trim());
+        if (remember) {
+          localStorage.setItem(STORAGE_KEY, password.trim());
+          sessionStorage.removeItem(STORAGE_KEY);
+        } else {
+          sessionStorage.setItem(STORAGE_KEY, password.trim());
+          localStorage.removeItem(STORAGE_KEY);
+        }
+        openDashboard(decrypted);
+      } catch (e) {
+        localStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(STORAGE_KEY);
+        errEl.textContent = 'Clave incorrecta. Comprueba mayúsculas y guiones.';
+        errEl.hidden = false;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Desbloquear panel';
+      }
+    }
+
+    document.getElementById('pwToggle').addEventListener('click', () => {
+      const inp = document.getElementById('vaultPass');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    });
+
+    document.getElementById('vaultForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      tryUnlock(document.getElementById('vaultPass').value, document.getElementById('vaultRemember').checked);
+    });
+
+    (async () => {
+      try {
+        const resp = await fetch('./data/dashboard.enc.json?v=' + Date.now());
+        if (resp.ok) ENVELOPE = await resp.json();
+      } catch (_) {}
+      const saved = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+      if (saved && ENVELOPE) {
+        tryUnlock(saved, !!localStorage.getItem(STORAGE_KEY));
+      }
+    })();
+  </script>
+</body>
+</html>
