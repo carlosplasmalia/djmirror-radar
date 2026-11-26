@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow, noarchive" />
   <title>Panel Privado · Acceso Restringido</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230d1120'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='32'%3E%F0%9F%94%92%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -76,6 +77,10 @@
     .vault-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
     .vault-sub { font-size: 13.5px; color: var(--muted); }
     .vault-form { display: flex; flex-direction: column; gap: 14px; }
+    .sr-user {
+      position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;
+      border: 0; padding: 0; overflow: hidden;
+    }
     .pw-wrap { position: relative; }
     .pw-input {
       width: 100%;
@@ -326,9 +331,10 @@
         <h2 class="vault-title">Panel Privado</h2>
         <p class="vault-sub">Introduce la clave de acceso para descifrar las métricas en tu navegador.</p>
       </div>
-      <form id="vaultForm" class="vault-form" autocomplete="on">
+      <form id="vaultForm" class="vault-form" method="post" action="#ok" autocomplete="on">
+        <input id="vaultUser" class="sr-user" type="text" name="username" value="panel-privado" autocomplete="username" tabindex="-1" aria-hidden="true" />
         <div class="pw-wrap">
-          <input id="vaultPass" class="pw-input" type="password" placeholder="Clave de acceso..." autocomplete="current-password" required autofocus />
+          <input id="vaultPass" class="pw-input" type="password" name="password" placeholder="Clave de acceso..." autocomplete="current-password" required autofocus />
           <button type="button" id="pwToggle" class="pw-toggle" aria-label="Mostrar clave">👁</button>
         </div>
         <label class="vault-check">
@@ -854,12 +860,24 @@
           if (!resp.ok) throw new Error('No se pudo cargar el archivo cifrado.');
           ENVELOPE = await resp.json();
         }
-        const decrypted = await decryptEnvelope(ENVELOPE, password.trim());
+        const cleanPw = password.trim();
+        const decrypted = await decryptEnvelope(ENVELOPE, cleanPw);
         if (remember) {
-          localStorage.setItem(STORAGE_KEY, password.trim());
+          localStorage.setItem(STORAGE_KEY, cleanPw);
           sessionStorage.removeItem(STORAGE_KEY);
+          if (window.PasswordCredential && navigator.credentials?.store) {
+            try {
+              const cred = new PasswordCredential({
+                id: 'panel-privado',
+                name: 'Panel Privado',
+                password: cleanPw,
+              });
+              await navigator.credentials.store(cred);
+            } catch (_) {}
+          }
+          try { history.pushState({ unlocked: true }, '', location.pathname); } catch (_) {}
         } else {
-          sessionStorage.setItem(STORAGE_KEY, password.trim());
+          sessionStorage.setItem(STORAGE_KEY, cleanPw);
           localStorage.removeItem(STORAGE_KEY);
         }
         openDashboard(decrypted);
@@ -889,9 +907,15 @@
         const resp = await fetch('./data/dashboard.enc.json?v=' + Date.now());
         if (resp.ok) ENVELOPE = await resp.json();
       } catch (_) {}
-      const saved = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+      let saved = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+      if (!saved && window.PasswordCredential && navigator.credentials?.get) {
+        try {
+          const cred = await navigator.credentials.get({ password: true, mediation: 'silent' });
+          if (cred && cred.password) saved = cred.password;
+        } catch (_) {}
+      }
       if (saved && ENVELOPE) {
-        tryUnlock(saved, !!localStorage.getItem(STORAGE_KEY));
+        tryUnlock(saved, !!localStorage.getItem(STORAGE_KEY) || true);
       }
     })();
   </script>
