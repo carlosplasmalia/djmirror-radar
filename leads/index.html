@@ -474,6 +474,9 @@
     .mode-ico { font-size: 22px; }
     .mode-t { font-size: 14px; font-weight: 800; }
     .mode-d { font-size: 12px; color: var(--muted); line-height: 1.42; }
+    .ap-settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .ap-time-row { display: flex; align-items: center; gap: 8px; }
+    .ap-time-row input { width: 118px; min-width: 0; }
     .cap-row { display: flex; flex-wrap: nowrap; gap: 6px; }
     .cap-btn {
       padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
@@ -516,9 +519,12 @@
       .topbar { padding: 10px 12px; gap: 8px; }
       .seg { width: 100%; justify-content: space-between; }
       .seg button { flex: 1; justify-content: center; padding: 8px 6px; font-size: 12px; }
+      .bucket-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+      .bucket-btn { padding: 8px 9px; font-size: 12px; justify-content: space-between; }
       .workspace { grid-template-columns: 1fr; }
       .sidebar { position: static; max-height: 360px; }
-      .mode-grid, .cohort-checks { grid-template-columns: 1fr; }
+      .mode-grid, .cohort-checks, .ap-settings-grid { grid-template-columns: 1fr; }
+      .ap-time-row input { flex: 1; width: auto; }
       .cap-row { flex-wrap: wrap; }
       .focus-card { padding: 18px 14px; }
       .f-row { grid-template-columns: 1fr; gap: 4px; }
@@ -715,7 +721,7 @@
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="ap-settings-grid">
         <div>
           <span class="field-lbl">2. Máximo de correos al día</span>
           <div class="cap-row" id="apCapRow">
@@ -728,10 +734,10 @@
         </div>
         <div>
           <span class="field-lbl">3. Horario de envío (CET Madrid)</span>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <input id="apWinStart" class="search-input mono" type="time" value="08:30" style="width:120px" />
+          <div class="ap-time-row">
+            <input id="apWinStart" class="search-input mono" type="time" value="08:30" />
             <span style="color:var(--muted);font-weight:700;">a</span>
-            <input id="apWinEnd" class="search-input mono" type="time" value="22:00" style="width:120px" />
+            <input id="apWinEnd" class="search-input mono" type="time" value="22:00" />
           </div>
         </div>
       </div>
@@ -966,6 +972,29 @@
       saveLocalCloudCache();
     }
 
+    function todayMadridIso() {
+      try {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid' }).format(new Date());
+      } catch (_) {
+        return new Date().toISOString().slice(0, 10);
+      }
+    }
+
+    function effectiveSentToday(ws) {
+      const lastRun = String(ws?.last_run_at || '');
+      if (lastRun.length >= 10 && lastRun.slice(0, 10) !== todayMadridIso()) {
+        return 0;
+      }
+      return ws?.sent_today ?? (DATA?.queue_summary?.sent_count || 0);
+    }
+
+    function cloudUiSignature(obj) {
+      return JSON.stringify({
+        ap: obj?.autopilot || {},
+        decs: obj?.decisions || {},
+      });
+    }
+
     function updateHeaderSyncUI() {
       const dot = document.getElementById('syncDot');
       const lbl = document.getElementById('syncLabel');
@@ -989,7 +1018,7 @@
 
       const ap = CLOUD.autopilot || {};
       const mode = ap.mode || 'SOLO_APROBADOS';
-      const sentToday = ws.sent_today ?? (DATA?.queue_summary?.sent_count || 0);
+      const sentToday = effectiveSentToday(ws);
       const cap = ap.daily_cap || 10;
       const apBtn = document.getElementById('autopilotBtn');
       apBtn.className = `autopilot-pill ap-${mode}`;
@@ -1022,36 +1051,74 @@
       const ops = getPendingOps();
       if (!ops.length) return;
       const remaining = [];
+      let droppedPermanent = 0;
       for (const op of ops) {
         try {
           await apiCall(op.path, 'POST', op.payload);
-        } catch (_) {
-          remaining.push(op);
+        } catch (err) {
+          // Drop non-retryable client 400/404 payloads instead of looping infinitely
+          if (err && err.status >= 400 && err.status < 500 && err.status !== 403 && err.status !== 429) {
+            droppedPermanent++;
+          } else {
+            remaining.push(op);
+          }
         }
       }
       setPendingOps(remaining);
+      if (droppedPermanent > 0) {
+        showToast('⚠️ Se descartó un cambio local inválido al reconectar.');
+      }
     }
 
     async function pullCloudState(silent = false) {
       if (!DATA?.sync_api_url || !SYNC_TOKEN) return;
+      const prevSig = cloudUiSignature(CLOUD);
       syncingNow = !silent;
       if (!silent) updateHeaderSyncUI();
+      let changed = false;
       try {
         await flushPendingOps();
         const fresh = await apiCall('/state', 'GET');
         mergeCloudState(fresh);
+        changed = cloudUiSignature(CLOUD) !== prevSig;
         cloudOnline = true;
       } catch (_) {
         cloudOnline = false;
       } finally {
         syncingNow = false;
         updateHeaderSyncUI();
-        // Don't re-render while user is actively typing in a textarea/input!
+        // Only re-render view when state actually changed (or explicit manual refresh),
+        // and NEVER interrupt while Carlos is typing! Prevents collapsing open drawers every 45s.
         const tag = (document.activeElement?.tagName || '').toLowerCase();
-        if (tag !== 'textarea' && tag !== 'input') {
+        if ((!silent || changed) && tag !== 'textarea' && tag !== 'input') {
           renderCurrentView();
         }
       }
+    }
+
+    function enqueuePendingDecision(em, body) {
+      const ops = getPendingOps();
+      const idx = ops.findIndex((o) => o.path === '/decision' && o.payload?.email === em);
+      if (idx >= 0) {
+        const prevPayload = ops[idx].payload || {};
+        if (body.clear_edits) {
+          const merged = { ...body };
+          if (!('internal_note' in merged) && 'internal_note' in prevPayload) {
+            merged.internal_note = prevPayload.internal_note;
+          }
+          ops[idx] = { path: '/decision', payload: merged };
+        } else {
+          // Preserve earlier queued decision/edits when a note-only update arrives offline
+          const merged = { ...prevPayload, ...body };
+          if ('decision' in body && body.decision !== 'CORRECCION_SOLICITADA' && !('edited_body_es' in body)) {
+            delete merged.clear_edits;
+          }
+          ops[idx] = { path: '/decision', payload: merged };
+        }
+      } else {
+        ops.push({ path: '/decision', payload: body });
+      }
+      setPendingOps(ops);
     }
 
     async function pushDecision(email, payload) {
@@ -1067,6 +1134,7 @@
         next.edited_subject_es = '';
         next.edited_body_es = '';
         next.correction_note = '';
+        next.approve_after_adapt = false;
         next.adapted_subject = '';
         next.adapted_body = '';
         next.adapted_subject_es = '';
@@ -1074,6 +1142,8 @@
         next.change_summary_es = '';
         next.stealth_guard = '';
         next.guard_violations = [];
+        next.client_rev = (Number(prev.client_rev) || 0) + 1;
+        next.adapted_for_rev = next.client_rev;
       }
       CLOUD.decisions[em] = next;
       delete DRAFTS_BUFFER[em];
@@ -1092,9 +1162,7 @@
         cloudOnline = true;
       } catch (_) {
         cloudOnline = false;
-        const ops = getPendingOps().filter((o) => !(o.path === '/decision' && o.payload?.email === em));
-        ops.push({ path: '/decision', payload: body });
-        setPendingOps(ops);
+        enqueuePendingDecision(em, body);
       } finally {
         syncingNow = false;
         updateHeaderSyncUI();
@@ -1149,14 +1217,23 @@
       if (!rep) return null;
       const d = getCloudEntry(c.email) || {};
       const hasAdapted = !!(d.adapted_subject && d.adapted_body);
-      const subj = hasAdapted ? d.adapted_subject : rep.subject;
-      const body = hasAdapted ? d.adapted_body : rep.body;
-      const subjEsBase = hasAdapted ? (d.adapted_subject_es || rep.subject_es) : (rep.subject_es || rep.subject);
-      const bodyEsBase = hasAdapted ? (d.adapted_body_es || rep.body_es) : (rep.body_es || rep.body);
-      // If Carlos submitted a pending correction not yet adapted, show his latest Spanish text
-      const waitingAdapt = d.decision === 'CORRECCION_SOLICITADA';
-      const shownSubjEs = (waitingAdapt && d.edited_subject_es) ? d.edited_subject_es : subjEsBase;
-      const shownBodyEs = (waitingAdapt && d.edited_body_es) ? d.edited_body_es : bodyEsBase;
+      const revertedToOrig = !hasAdapted && d.decision === 'PENDIENTE' && Number(d.client_rev || 0) > 0 && !!(rep.orig_subject && rep.orig_body);
+      const baseSubj = revertedToOrig ? rep.orig_subject : rep.subject;
+      const baseBody = revertedToOrig ? rep.orig_body : rep.body;
+      const baseSubjEs = revertedToOrig ? (rep.orig_subject_es || rep.orig_subject) : (rep.subject_es || rep.subject);
+      const baseBodyEs = revertedToOrig ? (rep.orig_body_es || rep.orig_body) : (rep.body_es || rep.body);
+
+      const subj = hasAdapted ? d.adapted_subject : baseSubj;
+      const body = hasAdapted ? d.adapted_body : baseBody;
+      const subjEsBase = hasAdapted ? (d.adapted_subject_es || baseSubjEs) : baseSubjEs;
+      const bodyEsBase = hasAdapted ? (d.adapted_body_es || baseBodyEs) : baseBodyEs;
+
+      // Show Carlos's pending/blocked Spanish draft while waiting adaptation or fixing a guard block
+      const waitingOrBlocked = d.decision === 'CORRECCION_SOLICITADA' || d.decision === 'BLOQUEADO_GUARDIA';
+      const shownSubjEs = (d.decision === 'CORRECCION_SOLICITADA' && d.edited_subject_es) ? d.edited_subject_es : subjEsBase;
+      const shownBodyEs = (d.decision === 'CORRECCION_SOLICITADA' && d.edited_body_es) ? d.edited_body_es : bodyEsBase;
+      // Only prefill quick-correction input when a correction is still pending or blocked (NEVER stale on ADAPTADO_LISTO!)
+      const activeCorrNote = waitingOrBlocked ? (d.correction_note || '') : '';
       return {
         ...rep,
         subject: subj,
@@ -1165,9 +1242,9 @@
         body_es: shownBodyEs,
         orig_subject_es: rep.orig_subject_es || rep.subject_es || rep.subject,
         orig_body_es: rep.orig_body_es || rep.body_es || rep.body,
-        change_summary_es: d.change_summary_es || rep.change_summary_es || '',
+        change_summary_es: d.change_summary_es || (revertedToOrig ? '' : (rep.change_summary_es || '')),
         guard_violations: d.guard_violations || [],
-        correction_note: d.correction_note || '',
+        correction_note: activeCorrNote,
         approve_after_adapt: !!d.approve_after_adapt,
         internal_note: d.internal_note || '',
         sent_at: d.sent_at || rep.sent_at || '',
@@ -1473,101 +1550,13 @@
             </div>`}
 
             <div id="actionDockSlot">${dockHtml}</div>
-          </div>
-
-          <div class="drawers">
-            ${isNativeEs ? '' : `
-            <details class="drawer">
-              <summary>
-                <span>🌍 Ver texto exacto en ${targetLangHuman} que se enviará</span>
+            ${isNativeEs ? `
+              <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;padding-top:4px;border-top:1px dashed rgba(255,255,255,0.08);">
                 <span class="pill pill-muted">${rep.in_reply_to ? '↩️ Mismo hilo' : '🆕 Correo nuevo'}</span>
-              </summary>
-              <div class="drawer-body">
-                <div class="orig-mail-box">
-                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <span class="mono" style="font-size:12px;color:var(--muted);">Para: ${esc(c.email)}</span>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                      <button type="button" class="btn-ghost btn-sm" id="copySubjBtn">📋 Copiar asunto</button>
-                      <button type="button" class="btn-ghost btn-sm" id="copyBodyBtn">📋 Copiar texto</button>
-                      <a class="btn-ghost btn-sm" id="openMailBtn" href="${mailtoHref}">✉️ Abrir en Mail</a>
-                    </div>
-                  </div>
-                  <div class="mail-subj">${esc(rep.subject)}</div>
-                  <div class="mail-body">${esc(rep.body)}</div>
-                </div>
-              </div>
-            </details>`}
-
-            <details class="drawer" ${hist.length && c.cohort === 'R0_INBOUND_URGENTE_2026' ? 'open' : ''}>
-              <summary>
-                <span>💬 Conversación anterior por correo</span>
-                <span class="pill ${hist.length ? 'pill-cyan' : 'pill-muted'}">${hist.length ? hist.length + ' mensaje(s)' : 'Primer contacto'}</span>
-              </summary>
-              <div class="drawer-body">
-                ${hist.length ? `
-                  <div class="timeline">
-                    ${hist.map((m) => `
-                      <article class="msg-card ${m.dir === 'IN' ? 'in' : 'out'}">
-                        <div class="msg-head">
-                          <div>
-                            <span class="pill ${m.dir === 'IN' ? 'pill-cyan' : 'pill-purple'}">${m.dir === 'IN' ? '📥 RECIBIDO' : '📤 ENVIADO'}</span>
-                            <strong style="margin-left:6px;color:var(--text);">${esc(m.from_name || (m.dir === 'IN' ? (c.name || c.email) : 'Carlos'))}</strong>
-                          </div>
-                          <span class="mono">${esc(m.date)} UTC</span>
-                        </div>
-                        <div class="msg-subj">${esc(m.subject)}</div>
-                        <div class="msg-body">${esc(m.body_top)}</div>
-                      </article>
-                    `).join('')}
-                  </div>` : '<div style="font-size:13px;color:var(--muted);">Sin correos previos: este será el primer contacto humano 1:1.</div>'}
-              </div>
-            </details>
-
-            <details class="drawer">
-              <summary>
-                <span>🔍 Ver ficha completa (uso en la app, hardware, licencias y nota privada)</span>
-                <span class="pill pill-gold mono">ICP ${c.icp_score}/100</span>
-              </summary>
-              <div class="drawer-body">
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <span style="font-size:12px;font-weight:700;color:var(--muted);">📝 Nota privada (solo para ti):</span>
-                  <input id="internalNoteInput" class="search-input" style="flex:1;min-width:220px;" type="text" value="${esc(rep.internal_note || '')}" placeholder="Escribe una nota interna..." />
-                  <button type="button" class="btn-ghost btn-sm" id="saveNoteBtn">💾 Guardar nota</button>
-                </div>
-                <div class="ctx-grid">
-                  <div class="ctx-card">
-                    <div style="font-size:13px;font-weight:800;">🖥️ Uso de la App & Equipo</div>
-                    <div class="mini-stats">
-                      <div class="mst"><div class="mst-v mono">${fmt(t.distinct_active_days)}</div><div class="mst-l">Días</div></div>
-                      <div class="mst"><div class="mst-v mono">${t.estimated_hours || 0}h</div><div class="mst-l">Horas</div></div>
-                      <div class="mst"><div class="mst-v mono">${fmt(t.total_events)}</div><div class="mst-l">Eventos</div></div>
-                      <div class="mst"><div class="mst-v mono">${t.days_inactive !== null && t.days_inactive !== undefined ? t.days_inactive + 'd' : '—'}</div><div class="mst-l">Inact.</div></div>
-                    </div>
-                    <div class="kv-list">
-                      <div class="kv-row"><span class="kv-k">Equipo</span><span class="kv-v">${esc(t.os_detail || t.os_family || '—')} · ${t.ram_gb ? t.ram_gb + ' GB RAM' : 'RAM n/d'}</span></div>
-                      <div class="kv-row"><span class="kv-k">Audio</span><span class="kv-v">${esc((t.audio_devices || []).join(', ') || t.audio_tier || '—')}</span></div>
-                      <div class="kv-row"><span class="kv-k">Último uso</span><span class="kv-v mono">${esc(t.last_seen || '—')}</span></div>
-                      <div class="kv-row"><span class="kv-k">Atribución</span><span class="kv-v">${esc(c.attribution_channel || '—')}</span></div>
-                    </div>
-                  </div>
-                  <div class="ctx-card">
-                    <div style="font-size:13px;font-weight:800;">🎛️ Funciones & Licencias</div>
-                    <div class="feat-grid">
-                      <span class="feat-chip ${t.dmx_events > 0 ? 'on' : ''}">DMX: ${t.dmx_events || 0}</span>
-                      <span class="feat-chip ${t.ndi_events > 0 ? 'on' : ''}">NDI: ${t.ndi_events || 0}</span>
-                      <span class="feat-chip ${t.spout_events > 0 ? 'on' : ''}">Spout: ${t.spout_events || 0}</span>
-                      <span class="feat-chip ${t.artist_brand_events > 0 ? 'on' : ''}">Logo: ${t.artist_brand_events || 0}</span>
-                      <span class="feat-chip ${t.custom_media_events > 0 ? 'on' : ''}">Media: ${t.custom_media_events || 0}</span>
-                      <span class="feat-chip ${t.buy_click_events > 0 ? 'warn' : ''}">Clics comprar: ${t.buy_click_events || 0}</span>
-                      <span class="feat-chip ${t.activation_failed_events > 0 ? 'hot' : ''}">Fallos activ.: ${t.activation_failed_events || 0}</span>
-                    </div>
-                    <div style="font-size:12px;color:var(--muted);"><strong>Motivo interno (JAMÁS citado):</strong> <span class="mono">${esc(rep.why_selected_internal || '')}</span></div>
-                    ${c.revenue_usd > 0 ? `<div class="pill pill-green" style="align-self:flex-start;">💳 Pagado: ${fmtUsd(c.revenue_usd)}</div>` : ''}
-                    ${c.crm_notes ? `<div style="font-size:12px;background:rgba(46,230,214,0.07);padding:8px 10px;border-radius:9px;"><strong>Notas CRM:</strong> ${esc(c.crm_notes)}</div>` : ''}
-                  </div>
-                </div>
-              </div>
-            </details>
+                <button type="button" class="btn-ghost btn-sm" id="copySubjBtn">📋 Copiar asunto</button>
+                <button type="button" class="btn-ghost btn-sm" id="copyBodyBtn">📋 Copiar texto</button>
+                <a class="btn-ghost btn-sm" id="openMailBtn" href="${mailtoHref}">✉️ Abrir en Mail</a>
+              </div>` : ''}
           </div>
         `;
       } else {
@@ -1577,6 +1566,112 @@
           </div>`;
       }
 
+      const targetLangDrawer = String(rep?.lang || c.lang || 'EN').toUpperCase();
+      const targetLangDrawerHuman = targetLangDrawer === 'FR' ? 'Francés' : targetLangDrawer === 'ES' ? 'Español' : 'Inglés';
+      const drawerMailto = rep
+        ? (() => {
+            const fullM = `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(rep.subject)}&body=${encodeURIComponent(rep.body)}`;
+            return fullM.length > 1950 ? `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(rep.subject)}` : fullM;
+          })()
+        : '';
+      const internalNoteVal = rep ? (rep.internal_note || '') : (getCloudEntry(c.email)?.internal_note || '');
+      const drawersHtml = `
+        <div class="drawers">
+          ${(rep && targetLangDrawer !== 'ES') ? `
+          <details class="drawer">
+            <summary>
+              <span>🌍 Ver texto exacto en ${targetLangDrawerHuman} que se enviará</span>
+              <span class="pill pill-muted">${rep.in_reply_to ? '↩️ Mismo hilo' : '🆕 Correo nuevo'}</span>
+            </summary>
+            <div class="drawer-body">
+              <div class="orig-mail-box">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span class="mono" style="font-size:12px;color:var(--muted);">Para: ${esc(c.email)}</span>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button type="button" class="btn-ghost btn-sm" id="copySubjBtn">📋 Copiar asunto</button>
+                    <button type="button" class="btn-ghost btn-sm" id="copyBodyBtn">📋 Copiar texto</button>
+                    <a class="btn-ghost btn-sm" id="openMailBtn" href="${drawerMailto}">✉️ Abrir en Mail</a>
+                  </div>
+                </div>
+                <div class="mail-subj">${esc(rep.subject)}</div>
+                <div class="mail-body">${esc(rep.body)}</div>
+              </div>
+            </div>
+          </details>` : ''}
+
+          <details class="drawer" ${(hist.length && (c.cohort === 'R0_INBOUND_URGENTE_2026' || !rep)) ? 'open' : ''}>
+            <summary>
+              <span>💬 Conversación anterior por correo</span>
+              <span class="pill ${hist.length ? 'pill-cyan' : 'pill-muted'}">${hist.length ? hist.length + ' mensaje(s)' : 'Primer contacto'}</span>
+            </summary>
+            <div class="drawer-body">
+              ${hist.length ? `
+                <div class="timeline">
+                  ${hist.map((m) => `
+                    <article class="msg-card ${m.dir === 'IN' ? 'in' : 'out'}">
+                      <div class="msg-head">
+                        <div>
+                          <span class="pill ${m.dir === 'IN' ? 'pill-cyan' : 'pill-purple'}">${m.dir === 'IN' ? '📥 RECIBIDO' : '📤 ENVIADO'}</span>
+                          <strong style="margin-left:6px;color:var(--text);">${esc(m.from_name || (m.dir === 'IN' ? (c.name || c.email) : 'Carlos'))}</strong>
+                        </div>
+                        <span class="mono">${esc(m.date)} UTC</span>
+                      </div>
+                      <div class="msg-subj">${esc(m.subject)}</div>
+                      <div class="msg-body">${esc(m.body_top)}</div>
+                    </article>
+                  `).join('')}
+                </div>` : '<div style="font-size:13px;color:var(--muted);">Sin correos previos: este será el primer contacto humano 1:1.</div>'}
+            </div>
+          </details>
+
+          <details class="drawer" ${!rep ? 'open' : ''}>
+            <summary>
+              <span>🔍 Ver ficha completa (uso en la app, hardware, licencias y nota privada)</span>
+              <span class="pill pill-gold mono">ICP ${c.icp_score}/100</span>
+            </summary>
+            <div class="drawer-body">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span style="font-size:12px;font-weight:700;color:var(--muted);">📝 Nota privada (solo para ti):</span>
+                <input id="internalNoteInput" class="search-input" style="flex:1;min-width:220px;" type="text" value="${esc(internalNoteVal)}" placeholder="Escribe una nota interna..." />
+                <button type="button" class="btn-ghost btn-sm" id="saveNoteBtn">💾 Guardar nota</button>
+              </div>
+              <div class="ctx-grid">
+                <div class="ctx-card">
+                  <div style="font-size:13px;font-weight:800;">🖥️ Uso de la App & Equipo</div>
+                  <div class="mini-stats">
+                    <div class="mst"><div class="mst-v mono">${fmt(t.distinct_active_days)}</div><div class="mst-l">Días</div></div>
+                    <div class="mst"><div class="mst-v mono">${t.estimated_hours || 0}h</div><div class="mst-l">Horas</div></div>
+                    <div class="mst"><div class="mst-v mono">${fmt(t.total_events)}</div><div class="mst-l">Eventos</div></div>
+                    <div class="mst"><div class="mst-v mono">${t.days_inactive !== null && t.days_inactive !== undefined ? t.days_inactive + 'd' : '—'}</div><div class="mst-l">Inact.</div></div>
+                  </div>
+                  <div class="kv-list">
+                    <div class="kv-row"><span class="kv-k">Equipo</span><span class="kv-v">${esc(t.os_detail || t.os_family || '—')} · ${t.ram_gb ? t.ram_gb + ' GB RAM' : 'RAM n/d'}</span></div>
+                    <div class="kv-row"><span class="kv-k">Audio</span><span class="kv-v">${esc((t.audio_devices || []).join(', ') || t.audio_tier || '—')}</span></div>
+                    <div class="kv-row"><span class="kv-k">Último uso</span><span class="kv-v mono">${esc(t.last_seen || '—')}</span></div>
+                    <div class="kv-row"><span class="kv-k">Atribución</span><span class="kv-v">${esc(c.attribution_channel || '—')}</span></div>
+                  </div>
+                </div>
+                <div class="ctx-card">
+                  <div style="font-size:13px;font-weight:800;">🎛️ Funciones & Licencias</div>
+                  <div class="feat-grid">
+                    <span class="feat-chip ${t.dmx_events > 0 ? 'on' : ''}">DMX: ${t.dmx_events || 0}</span>
+                    <span class="feat-chip ${t.ndi_events > 0 ? 'on' : ''}">NDI: ${t.ndi_events || 0}</span>
+                    <span class="feat-chip ${t.spout_events > 0 ? 'on' : ''}">Spout: ${t.spout_events || 0}</span>
+                    <span class="feat-chip ${t.artist_brand_events > 0 ? 'on' : ''}">Logo: ${t.artist_brand_events || 0}</span>
+                    <span class="feat-chip ${t.custom_media_events > 0 ? 'on' : ''}">Media: ${t.custom_media_events || 0}</span>
+                    <span class="feat-chip ${t.buy_click_events > 0 ? 'warn' : ''}">Clics comprar: ${t.buy_click_events || 0}</span>
+                    <span class="feat-chip ${t.activation_failed_events > 0 ? 'hot' : ''}">Fallos activ.: ${t.activation_failed_events || 0}</span>
+                  </div>
+                  ${rep?.why_selected_internal ? `<div style="font-size:12px;color:var(--muted);"><strong>Motivo interno (JAMÁS citado):</strong> <span class="mono">${esc(rep.why_selected_internal)}</span></div>` : ''}
+                  ${c.revenue_usd > 0 ? `<div class="pill pill-green" style="align-self:flex-start;">💳 Pagado: ${fmtUsd(c.revenue_usd)}</div>` : ''}
+                  ${c.crm_notes ? `<div style="font-size:12px;background:rgba(46,230,214,0.07);padding:8px 10px;border-radius:9px;"><strong>Notas CRM:</strong> ${esc(c.crm_notes)}</div>` : ''}
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+      `;
+
       container.innerHTML = `
         <article class="focus-card">
           ${opts.backLabel ? `<div><button type="button" class="btn-ghost btn-sm" id="backCardBtn">${esc(opts.backLabel)}</button></div>` : ''}
@@ -1585,7 +1680,7 @@
               <div class="fc-name">
                 <span>${flagOf(c.country_code)}</span>
                 <span>${esc(c.name || c.email)}</span>
-                ${statusBadgeHtml(st, rep?.sent_at)}
+                ${rep ? statusBadgeHtml(st, rep?.sent_at) : `<span class="pill pill-muted">${esc(c.license_category || 'Contacto')}</span>`}
               </div>
               <div class="fc-sub">
                 <span class="mono" style="color:var(--cyan);">${esc(c.email)}</span>
@@ -1609,6 +1704,7 @@
           ${stateBannerHtml}
           ${alertHtml}
           ${stageHtml}
+          ${drawersHtml}
         </article>
       `;
 
@@ -1620,6 +1716,16 @@
       q('nextCardBtn').addEventListener('click', () => opts.onNext && opts.onNext());
       if (q('nextAfterSentBtn')) q('nextAfterSentBtn').addEventListener('click', () => opts.onNext && opts.onNext());
 
+      const saveInternalNote = async () => {
+        const btn = q('saveNoteBtn');
+        if (btn) btn.disabled = true;
+        const val = q('internalNoteInput')?.value || '';
+        await pushDecision(c.email, { internal_note: val, kind: rep ? rep.kind : 'DIRECTORIO' });
+        if (btn) btn.disabled = false;
+        showToast('📝 Nota interna guardada');
+      };
+      if (q('saveNoteBtn')) q('saveNoteBtn').addEventListener('click', saveInternalNote);
+
       if (!rep) return;
 
       if (q('copySubjBtn')) q('copySubjBtn').addEventListener('click', () => copyText(rep.subject, 'Asunto'));
@@ -1630,16 +1736,6 @@
           q('openMailBtn').addEventListener('click', () => copyText(rep.body, 'Cuerpo (pégalo en Mail con ⌘V)'));
         }
       }
-
-      const saveInternalNote = async () => {
-        const btn = q('saveNoteBtn');
-        if (btn) btn.disabled = true;
-        const val = q('internalNoteInput')?.value || '';
-        await pushDecision(c.email, { internal_note: val, kind: rep.kind });
-        if (btn) btn.disabled = false;
-        showToast('📝 Nota interna guardada');
-      };
-      if (q('saveNoteBtn')) q('saveNoteBtn').addEventListener('click', saveInternalNote);
 
       const handleRevertOriginal = async () => {
         delete DRAFTS_BUFFER[em];
@@ -1706,10 +1802,14 @@
         }
         if (q('adaptOnlyBtn')) {
           q('adaptOnlyBtn').addEventListener('click', async () => {
-            lockDock();
             const sVal = subjEl.value.trim();
             const bVal = bodyEl.value.trim();
             const nVal = noteEl ? noteEl.value.trim() : '';
+            if (!bVal && !nVal) {
+              showToast('⚠️ Escribe el mensaje en castellano o una corrección antes de adaptar.');
+              return;
+            }
+            lockDock();
             await pushDecision(c.email, {
               decision: 'CORRECCION_SOLICITADA',
               edited_subject_es: sVal,
@@ -1724,10 +1824,14 @@
         }
         if (q('adaptAndOkBtn')) {
           q('adaptAndOkBtn').addEventListener('click', async () => {
-            lockDock();
             const sVal = subjEl.value.trim();
             const bVal = bodyEl.value.trim();
             const nVal = noteEl ? noteEl.value.trim() : '';
+            if (!bVal && !nVal) {
+              showToast('⚠️ Escribe el mensaje en castellano o una corrección antes de enviar.');
+              return;
+            }
+            lockDock();
             await pushDecision(c.email, {
               decision: 'CORRECCION_SOLICITADA',
               edited_subject_es: sVal,
@@ -2064,7 +2168,7 @@
       const winTxt = ws.in_window === false ? '🌙 Fuera de horario (esperando ventana)' : '🟢 En horario de envío';
       document.getElementById('apWorkerBanner').innerHTML = `
         <span>🤖 <strong>Mac activo cada ${ws.interval_minutes || 15} min</strong> · Última revisión: <strong>${esc(ws.last_run_at || 'pendiente')}</strong> · ${winTxt}</span>
-        <span class="mono">Hoy: ${ws.sent_today ?? 0}/${d.daily_cap}</span>
+        <span class="mono">Hoy: ${effectiveSentToday(ws)}/${d.daily_cap}</span>
       `;
       document.querySelectorAll('#apModeGrid .mode-card').forEach((btn) => {
         const m = btn.dataset.apMode;
@@ -2277,11 +2381,34 @@
     function lockDashboard() {
       localStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(LOCAL_CACHE_KEY);
       if (POLL_TIMER) { clearInterval(POLL_TIMER); POLL_TIMER = null; }
       DATA = null;
       SYNC_TOKEN = '';
+      cloudOnline = false;
+      CLOUD = {
+        version: 0,
+        updated_at: '',
+        autopilot: { mode: 'SOLO_APROBADOS', daily_cap: 10, window_start_cet: '08:30', window_end_cet: '22:00', allowed_cohorts: SAFE_AUTOPILOT_COHORTS.map((c) => c.id) },
+        decisions: {},
+        worker_status: { last_run_at: '', sent_today: 0, daily_cap: 10, interval_minutes: 15, in_window: true },
+        activity_log: [],
+      };
+      for (const k of Object.keys(DRAFTS_BUFFER)) delete DRAFTS_BUFFER[k];
+      state.apDraft = null;
       if (monthlyChart) { monthlyChart.destroy(); monthlyChart = null; }
       if (icpCompareChart) { icpCompareChart.destroy(); icpCompareChart = null; }
+      for (const id of [
+        'focusCardSlot', 'focusBuckets', 'focusStatusStrip', 'leadList', 'listDetailSlot',
+        'kpiGrid', 'funnelBars', 'dirTableWrap', 'dirInspectorSlot', 'playbooksTable', 'apActivityLog',
+      ]) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+      }
+      const expTa = document.getElementById('exportTa');
+      if (expTa) expTa.value = '';
+      document.getElementById('autopilotModal').hidden = true;
+      document.getElementById('exportModal').hidden = true;
       document.title = 'Panel Privado · Acceso Restringido';
       document.getElementById('appShell').hidden = true;
       document.getElementById('vaultGate').hidden = false;
