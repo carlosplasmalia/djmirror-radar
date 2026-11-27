@@ -12,36 +12,35 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --bg: #070911;
-      --bg-2: #0d1120;
-      --card: rgba(16, 21, 38, 0.86);
-      --card-solid: #11172b;
-      --border: rgba(255, 255, 255, 0.08);
-      --border-hi: rgba(46, 230, 214, 0.42);
-      --text: #f3f6ff;
-      --muted: #93a0c2;
+      --bg: #080b14;
+      --bg-2: #0e1324;
+      --card: rgba(17, 23, 42, 0.90);
+      --card-soft: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.09);
+      --border-hi: rgba(46, 230, 214, 0.45);
+      --text: #f4f7ff;
+      --muted: #9aa7c7;
       --cyan: #2ee6d6;
       --magenta: #ff4fa3;
       --purple: #8b6cff;
       --gold: #ffc83d;
-      --green: #34d399;
+      --green: #22c55e;
+      --green-soft: #34d399;
       --red: #fb7185;
-      --orange: #f97316;
-      --blue: #3b82f6;
-      --radius: 18px;
+      --blue: #60a5fa;
+      --radius: 20px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     [hidden] { display: none !important; }
     body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       background:
-        radial-gradient(900px 520px at 8% -10%, rgba(46, 230, 214, 0.14), transparent 60%),
-        radial-gradient(820px 480px at 94% 0%, rgba(255, 79, 163, 0.13), transparent 58%),
-        radial-gradient(700px 600px at 50% 100%, rgba(139, 108, 255, 0.10), transparent 65%),
+        radial-gradient(900px 520px at 10% -10%, rgba(46, 230, 214, 0.12), transparent 60%),
+        radial-gradient(820px 480px at 92% 0%, rgba(139, 108, 255, 0.12), transparent 58%),
         var(--bg);
       color: var(--text);
       min-height: 100vh;
-      line-height: 1.48;
+      line-height: 1.55;
       -webkit-font-smoothing: antialiased;
     }
     .mono { font-family: 'JetBrains Mono', monospace; }
@@ -51,365 +50,490 @@
     /* Auth Vault Gate */
     .vault-screen { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
     .vault-card {
-      width: 100%; max-width: 430px; background: rgba(13, 18, 34, 0.92);
-      border: 1px solid rgba(46, 230, 214, 0.22); border-radius: 22px; padding: 32px 28px;
-      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), 0 0 40px rgba(46, 230, 214, 0.08);
-      backdrop-filter: blur(18px); display: flex; flex-direction: column; gap: 18px;
+      width: 100%; max-width: 430px; background: rgba(13, 18, 34, 0.94);
+      border: 1px solid rgba(46, 230, 214, 0.24); border-radius: 24px; padding: 32px 28px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55); display: flex; flex-direction: column; gap: 18px;
     }
     .vault-badge {
       display: inline-flex; align-items: center; gap: 7px; align-self: flex-start;
-      padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      padding: 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;
       letter-spacing: .04em; text-transform: uppercase;
       background: rgba(46, 230, 214, 0.12); color: var(--cyan); border: 1px solid rgba(46, 230, 214, 0.28);
     }
     .vault-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
-    .vault-sub { font-size: 13.5px; color: var(--muted); }
+    .vault-sub { font-size: 14px; color: var(--muted); }
     .vault-form { display: flex; flex-direction: column; gap: 14px; }
     .sr-user { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; }
     .pw-wrap { position: relative; }
     .pw-input {
-      width: 100%; background: rgba(255, 255, 255, 0.045); border: 1px solid rgba(255, 255, 255, 0.14);
-      color: var(--text); padding: 13px 44px 13px 14px; border-radius: 12px;
-      font: 600 15px/1.2 'JetBrains Mono', monospace; outline: none; transition: border-color .18s, box-shadow .18s;
+      width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text); padding: 14px 44px 14px 15px; border-radius: 13px;
+      font: 600 15px/1.2 'JetBrains Mono', monospace; outline: none;
     }
     .pw-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(46, 230, 214, 0.16); }
     .pw-toggle {
       position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
       border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 16px; padding: 6px;
     }
-    .vault-check { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; }
-    .vault-check input { accent-color: var(--cyan); width: 16px; height: 16px; }
+    .vault-check { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: var(--muted); cursor: pointer; user-select: none; }
+    .vault-check input { accent-color: var(--cyan); width: 17px; height: 17px; }
     .vault-btn {
-      border: 0; border-radius: 12px; padding: 13px 16px; cursor: pointer;
-      font: 700 14px/1 inherit; color: #070911;
-      background: linear-gradient(135deg, var(--cyan), #6ee7f9 45%, var(--purple));
-      box-shadow: 0 8px 26px rgba(46, 230, 214, 0.25); transition: transform .14s ease, filter .14s ease;
+      border: 0; border-radius: 13px; padding: 14px 18px; cursor: pointer;
+      font: 800 15px/1 inherit; color: #070911;
+      background: linear-gradient(135deg, var(--cyan), #6ee7f9 50%, var(--purple));
+      box-shadow: 0 8px 26px rgba(46, 230, 214, 0.25); transition: transform .14s ease;
     }
-    .vault-btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
+    .vault-btn:hover { transform: translateY(-1px); }
     .vault-btn:disabled { opacity: 0.6; cursor: wait; }
     .vault-err {
-      font-size: 12.5px; color: var(--red); background: rgba(251, 113, 133, 0.11);
-      border: 1px solid rgba(251, 113, 133, 0.28); border-radius: 10px; padding: 10px 12px;
+      font-size: 13px; color: var(--red); background: rgba(251, 113, 133, 0.12);
+      border: 1px solid rgba(251, 113, 133, 0.3); border-radius: 11px; padding: 10px 12px;
     }
-    .vault-foot { font-size: 11.5px; color: var(--muted); opacity: 0.85; border-top: 1px solid var(--border); padding-top: 12px; }
+    .vault-foot { font-size: 12px; color: var(--muted); opacity: 0.85; border-top: 1px solid var(--border); padding-top: 12px; }
 
-    /* Sticky Topbar */
+    /* Clean Sticky Topbar */
     header {
       position: sticky; top: 0; z-index: 40;
       backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-      background: rgba(7, 9, 17, 0.82); border-bottom: 1px solid var(--border);
+      background: rgba(8, 11, 20, 0.88); border-bottom: 1px solid var(--border);
     }
     .topbar {
-      max-width: 1480px; margin: 0 auto; padding: 12px 18px;
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+      max-width: 1380px; margin: 0 auto; padding: 11px 18px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
     }
-    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand { display: flex; align-items: center; gap: 10px; }
     .logo-mark {
-      width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
-      background: linear-gradient(135deg, var(--cyan), var(--purple), var(--magenta));
-      display: grid; place-items: center; font-weight: 800; font-size: 15px; color: #070911;
-      box-shadow: 0 0 24px rgba(46, 230, 214, 0.35);
+      width: 36px; height: 36px; border-radius: 11px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      display: grid; place-items: center; font-weight: 800; font-size: 14px; color: #070911;
     }
-    .brand h1 { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
-    .brand-sub { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
-    .pulse-dot {
-      width: 8px; height: 8px; border-radius: 50%; background: var(--green);
-      box-shadow: 0 0 10px var(--green); display: inline-block; animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.85); } }
+    .brand h1 { font-size: 15.5px; font-weight: 800; letter-spacing: -0.02em; }
+    .sync-sub { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .dot-ok { background: var(--green-soft); box-shadow: 0 0 9px var(--green-soft); }
+    .dot-busy { background: var(--gold); animation: pulse 1.2s infinite; }
+    .dot-off { background: var(--red); }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 
-    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .seg {
-      display: inline-flex; flex-wrap: wrap; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-      padding: 3px; border-radius: 12px; gap: 2px;
+      display: inline-flex; background: rgba(255,255,255,0.045); border: 1px solid var(--border);
+      padding: 3px; border-radius: 13px; gap: 3px;
     }
     .seg button {
       border: 0; background: transparent; color: var(--muted);
-      padding: 7px 12px; border-radius: 9px; font: 600 12.5px/1 inherit; cursor: pointer;
-      transition: all .16s ease; display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 13px; border-radius: 10px; font: 700 13px/1 inherit; cursor: pointer;
+      transition: all .15s ease; display: inline-flex; align-items: center; gap: 6px;
     }
     .seg button:hover { color: var(--text); }
     .seg button.active {
       background: linear-gradient(135deg, rgba(46,230,214,.22), rgba(139,108,255,.26));
-      color: var(--text); box-shadow: inset 0 0 0 1px rgba(46,230,214,.35);
+      color: var(--text); box-shadow: inset 0 0 0 1px rgba(46,230,214,.38);
     }
-    .seg-cnt {
-      font-size: 10.5px; padding: 1px 6px; border-radius: 999px;
-      background: rgba(255,255,255,0.08); color: var(--text);
+
+    .right-tools { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .autopilot-pill {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 14px; border-radius: 999px; font: 800 12.5px/1 inherit;
+      cursor: pointer; border: 1.5px solid; transition: transform .13s ease, filter .15s ease;
     }
+    .autopilot-pill:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .ap-SOLO_APROBADOS { background: rgba(34,197,94,0.16); border-color: rgba(52,211,153,0.55); color: #a7f3d0; }
+    .ap-PAUSADO { background: rgba(255,200,61,0.15); border-color: rgba(255,200,61,0.5); color: #fde68a; }
+    .ap-PILOTO_AUTOMATICO { background: rgba(46,230,214,0.18); border-color: var(--cyan); color: #ccfbf1; box-shadow: 0 0 18px rgba(46,230,214,0.22); }
+
     .btn-ghost {
-      display: inline-flex; align-items: center; gap: 6px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
       padding: 8px 12px; border-radius: 11px; font: 600 12.5px/1 inherit;
       background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text);
-      cursor: pointer; transition: border-color .16s, transform .14s, background .16s;
+      cursor: pointer; transition: border-color .15s, background .15s, transform .12s;
     }
-    .btn-ghost:hover { border-color: var(--border-hi); transform: translateY(-1px); background: rgba(46,230,214,0.08); }
-    .btn-sm { padding: 6px 10px; font-size: 11.5px; border-radius: 9px; }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--border-hi); background: rgba(46,230,214,0.09); transform: translateY(-1px); }
+    .btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 9px; }
 
-    main { max-width: 1480px; margin: 0 auto; padding: 18px 18px 56px; display: flex; flex-direction: column; gap: 18px; }
+    main { max-width: 1380px; margin: 0 auto; padding: 18px 18px 64px; display: flex; flex-direction: column; gap: 18px; }
 
-    /* Cards & KPIs */
-    .kpi-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+    /* Pills */
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .pill-cyan { background: rgba(46,230,214,0.14); color: var(--cyan); border: 1px solid rgba(46,230,214,0.3); }
+    .pill-green { background: rgba(52,211,153,0.16); color: var(--green-soft); border: 1px solid rgba(52,211,153,0.34); }
+    .pill-gold { background: rgba(255,200,61,0.16); color: var(--gold); border: 1px solid rgba(255,200,61,0.36); }
+    .pill-red { background: rgba(251,113,133,0.16); color: var(--red); border: 1px solid rgba(251,113,133,0.36); }
+    .pill-purple { background: rgba(139,108,255,0.18); color: #d4c4ff; border: 1px solid rgba(139,108,255,0.38); }
+    .pill-blue { background: rgba(96,165,250,0.16); color: #bfdbfe; border: 1px solid rgba(96,165,250,0.34); }
+    .pill-muted { background: rgba(154,167,199,0.12); color: var(--muted); border: 1px solid rgba(255,255,255,0.08); }
+
     .card {
       background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 16px 18px; position: relative; backdrop-filter: blur(12px);
+      padding: 20px 22px; backdrop-filter: blur(12px);
     }
-    .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
-    .kpi-val { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin-top: 6px; }
-    .kpi-foot { margin-top: 6px; font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
-    /* Pills & Badges */
-    .pill {
-      display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px;
-      border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap;
+    /* ===================================================================
+       ADHD-FRIENDLY FOCUS MODE (1 A 1)
+       =================================================================== */
+    .focus-shell {
+      width: 100%; max-width: 860px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 16px;
     }
-    .kpi-foot .pill { white-space: normal; max-width: 100%; line-height: 1.3; text-align: left; }
-    .pill-cyan { background: rgba(46,230,214,0.14); color: var(--cyan); border: 1px solid rgba(46,230,214,0.28); }
-    .pill-green { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.28); }
-    .pill-gold { background: rgba(255,200,61,0.15); color: var(--gold); border: 1px solid rgba(255,200,61,0.3); }
-    .pill-red { background: rgba(251,113,133,0.16); color: var(--red); border: 1px solid rgba(251,113,133,0.32); }
-    .pill-purple { background: rgba(139,108,255,0.18); color: #c4b5fd; border: 1px solid rgba(139,108,255,0.34); }
-    .pill-magenta { background: rgba(255,79,163,0.16); color: var(--magenta); border: 1px solid rgba(255,79,163,0.3); }
-    .pill-blue { background: rgba(59,130,246,0.16); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
-    .pill-muted { background: rgba(147,160,194,0.13); color: var(--muted); border: 1px solid rgba(255,255,255,0.08); }
+    .focus-nav-bar {
+      background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+      padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .bucket-row { display: flex; flex-wrap: wrap; gap: 7px; }
+    .bucket-btn {
+      border: 1px solid var(--border); background: rgba(255,255,255,0.035); color: var(--muted);
+      padding: 9px 14px; border-radius: 12px; font: 700 13px/1 inherit; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px; transition: all .15s;
+    }
+    .bucket-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.22); }
+    .bucket-btn.active {
+      background: linear-gradient(135deg, rgba(46,230,214,0.18), rgba(139,108,255,0.2));
+      border-color: var(--cyan); color: var(--text);
+    }
+    .bucket-cnt {
+      padding: 2px 7px; border-radius: 999px; font-size: 11.5px;
+      background: rgba(255,255,255,0.1); color: var(--text);
+    }
+    .status-strip {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+      padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.07); font-size: 12.5px; color: var(--muted);
+    }
+    .status-chips { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .stat-mini { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; color: #dbe5ff; }
+    .prog-track { width: 100%; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.07); overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--green-soft), var(--cyan)); transition: width .25s ease; }
 
-    /* Master-Detail Workspace */
-    .workspace {
-      display: grid;
-      grid-template-columns: 375px minmax(0, 1fr);
-      gap: 16px;
-      align-items: start;
+    /* Single Centered Review Card */
+    .focus-card {
+      background: linear-gradient(180deg, rgba(19, 26, 49, 0.96), rgba(13, 18, 35, 0.96));
+      border: 1px solid rgba(255, 255, 255, 0.11); border-radius: 24px; padding: 24px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
+      display: flex; flex-direction: column; gap: 18px;
     }
+    .fc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+    .fc-person { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+    .fc-name { font-size: 23px; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .fc-sub { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .fc-pager { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+    .reason-banner {
+      background: rgba(46, 230, 214, 0.08); border: 1px solid rgba(46, 230, 214, 0.25);
+      border-radius: 15px; padding: 13px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+      font-size: 14px; color: #e8f1ff;
+    }
+
+    .state-banner {
+      border-radius: 15px; padding: 13px 16px; font-size: 13.5px; font-weight: 600;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; border: 1px solid;
+    }
+    .sb-ok { background: rgba(34,197,94,0.14); border-color: rgba(52,211,153,0.45); color: #d1fae5; }
+    .sb-adapt { background: rgba(46,230,214,0.14); border-color: rgba(46,230,214,0.45); color: #ccfbf1; }
+    .sb-wait { background: rgba(255,200,61,0.14); border-color: rgba(255,200,61,0.45); color: #fef3c7; }
+    .sb-block { background: rgba(251,113,133,0.15); border-color: rgba(251,113,133,0.48); color: #ffe4e6; }
+    .sb-purple { background: rgba(139,108,255,0.15); border-color: rgba(139,108,255,0.45); color: #ede9fe; }
+
+    /* Editable Spanish Stage (Hero!) */
+    .es-stage {
+      background: rgba(10, 14, 27, 0.85);
+      border: 1.5px solid rgba(255, 200, 61, 0.38);
+      border-radius: 18px; padding: 18px;
+      display: flex; flex-direction: column; gap: 12px;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .es-stage.dirty {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(255, 200, 61, 0.14);
+    }
+    .es-stage-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+    }
+    .es-stage-title { font-size: 13px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--gold); }
+    .field-lbl { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; display: block; }
+    .es-subj-input {
+      width: 100%; background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.13);
+      color: var(--text); padding: 11px 13px; border-radius: 11px;
+      font: 700 14.5px/1.35 inherit; outline: none; transition: border-color .15s;
+    }
+    .es-subj-input:focus { border-color: var(--gold); background: rgba(255,255,255,0.065); }
+    .es-body-ta {
+      width: 100%; min-height: 270px; resize: vertical;
+      background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.12);
+      color: #f1f5ff; padding: 14px 15px; border-radius: 12px;
+      font: 500 15px/1.65 inherit; outline: none; transition: border-color .15s;
+    }
+    .es-body-ta:focus { border-color: var(--gold); background: rgba(255,255,255,0.055); }
+    .es-subj-input:read-only, .es-body-ta:read-only { opacity: 0.85; cursor: default; }
+
+    .corr-box {
+      background: rgba(139, 108, 255, 0.08); border: 1px dashed rgba(139, 108, 255, 0.42);
+      border-radius: 13px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .corr-input {
+      width: 100%; background: rgba(7, 10, 20, 0.65); border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text); padding: 10px 12px; border-radius: 10px;
+      font: 500 14px/1.4 inherit; outline: none;
+    }
+    .corr-input:focus { border-color: var(--purple); }
+
+    /* Big Unmistakable Action Dock */
+    .action-dock {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+      padding-top: 6px;
+    }
+    .btn-primary-ok {
+      flex: 1.5; min-width: 220px; min-height: 54px; padding: 14px 20px;
+      border: 0; border-radius: 15px; cursor: pointer;
+      font: 800 16px/1.1 inherit; color: #052010;
+      background: linear-gradient(135deg, #34d399, #22c55e);
+      box-shadow: 0 10px 28px rgba(34, 197, 94, 0.30);
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      transition: transform .13s ease, filter .15s ease;
+    }
+    .btn-primary-ok:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.07); }
+    .btn-primary-ok:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-adapt {
+      flex: 1.3; min-width: 210px; min-height: 52px; padding: 13px 18px;
+      border: 0; border-radius: 15px; cursor: pointer;
+      font: 800 14.5px/1.15 inherit; color: #080b14;
+      background: linear-gradient(135deg, var(--gold), #fbbf24);
+      box-shadow: 0 8px 24px rgba(255, 200, 61, 0.28);
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      transition: transform .13s ease, filter .15s ease;
+    }
+    .btn-adapt:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06); }
+
+    .btn-adapt-ok {
+      flex: 1.3; min-width: 210px; min-height: 52px; padding: 13px 18px;
+      border: 0; border-radius: 15px; cursor: pointer;
+      font: 800 14.5px/1.15 inherit; color: #051812;
+      background: linear-gradient(135deg, var(--cyan), #34d399);
+      box-shadow: 0 8px 24px rgba(46, 230, 214, 0.26);
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      transition: transform .13s ease, filter .15s ease;
+    }
+    .btn-adapt-ok:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06); }
+
+    .btn-calm {
+      min-height: 52px; padding: 12px 16px; border-radius: 14px;
+      border: 1px solid var(--border); background: rgba(255,255,255,0.045); color: var(--text);
+      font: 700 14px/1 inherit; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      transition: all .14s;
+    }
+    .btn-calm:hover:not(:disabled) { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.08); }
+    .btn-calm.danger:hover { border-color: rgba(251,113,133,0.55); color: #fecdd3; background: rgba(251,113,133,0.12); }
+
+    /* Calm Collapsible Drawers */
+    .drawers { display: flex; flex-direction: column; gap: 10px; }
+    details.drawer {
+      background: rgba(255, 255, 255, 0.025); border: 1px solid var(--border);
+      border-radius: 15px; overflow: hidden;
+    }
+    details.drawer[open] { border-color: rgba(46, 230, 214, 0.28); background: rgba(11, 15, 29, 0.72); }
+    details.drawer > summary {
+      padding: 13px 16px; cursor: pointer; list-style: none;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      font-size: 13.5px; font-weight: 700; color: #dbe5ff; user-select: none;
+    }
+    details.drawer > summary::-webkit-details-marker { display: none; }
+    details.drawer > summary::after { content: '▸'; color: var(--muted); transition: transform .15s; font-size: 14px; }
+    details.drawer[open] > summary::after { transform: rotate(90deg); color: var(--cyan); }
+    .drawer-body { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 14px; }
+
+    .orig-mail-box {
+      background: rgba(7, 9, 17, 0.72); border: 1px solid var(--border); border-radius: 13px;
+      padding: 14px 16px; display: flex; flex-direction: column; gap: 9px;
+    }
+    .mail-subj {
+      font-size: 13.5px; font-weight: 700; background: rgba(255,255,255,0.045);
+      padding: 8px 11px; border-radius: 9px; border-left: 3px solid var(--cyan); overflow-wrap: anywhere;
+    }
+    .mail-body { white-space: pre-wrap; font-size: 13.5px; line-height: 1.58; color: #e4ebff; overflow-wrap: anywhere; }
+
+    /* Empty Celebration */
+    .celebrate {
+      text-align: center; padding: 46px 26px; display: flex; flex-direction: column;
+      align-items: center; gap: 14px;
+    }
+    .celebrate-ico { font-size: 48px; }
+    .celebrate h2 { font-size: 22px; font-weight: 800; }
+    .celebrate p { max-width: 520px; font-size: 14.5px; color: var(--muted); }
+
+    /* ===================================================================
+       CLASSIC MASTER-DETAIL LIST VIEW
+       =================================================================== */
+    .workspace { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; align-items: start; }
     .sidebar {
       background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
       display: flex; flex-direction: column; overflow: hidden;
-      position: sticky; top: 76px; max-height: calc(100vh - 96px);
+      position: sticky; top: 74px; max-height: calc(100vh - 94px);
     }
-    .sidebar-head {
-      padding: 14px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px;
-      background: rgba(13, 18, 34, 0.72);
-    }
+    .sidebar-head { padding: 13px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 9px; background: rgba(13, 18, 34, 0.78); }
     .search-input {
-      width: 100%; background: rgba(255,255,255,0.045); border: 1px solid var(--border); color: var(--text);
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text);
       padding: 9px 12px; border-radius: 10px; font: 500 13px/1.2 inherit; outline: none;
     }
-    .search-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(46,230,214,0.12); }
+    .search-input:focus { border-color: var(--cyan); }
     .chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
     .chip {
       border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--muted);
-      padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;
-      transition: all .14s;
+      padding: 5px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 700; cursor: pointer;
     }
-    .chip:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
     .chip.active { background: rgba(46,230,214,0.16); color: var(--cyan); border-color: rgba(46,230,214,0.45); }
     .sub-filters { display: flex; gap: 6px; }
     .sub-select {
-      flex: 1; background: rgba(255,255,255,0.045); border: 1px solid var(--border); color: var(--text);
-      padding: 6px 8px; border-radius: 8px; font-size: 11.5px; font-weight: 600; outline: none;
+      flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text);
+      padding: 7px 9px; border-radius: 9px; font-size: 12px; font-weight: 600; outline: none;
     }
     .sub-select option { background: #0d1120; color: var(--text); }
-    .list-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 0 2px; }
     .lead-list { overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
     .lead-item {
       padding: 11px 12px; border-radius: 13px; border: 1px solid rgba(255,255,255,0.06);
-      background: rgba(255,255,255,0.022); cursor: pointer; transition: all .14s ease;
+      background: rgba(255,255,255,0.024); cursor: pointer; transition: all .14s;
       display: flex; flex-direction: column; gap: 5px; text-align: left; width: 100%; color: var(--text);
     }
-    .lead-item:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.045); }
-    .lead-item.active {
-      border-color: var(--cyan); background: linear-gradient(135deg, rgba(46,230,214,0.13), rgba(139,108,255,0.12));
-      box-shadow: 0 0 0 1px rgba(46,230,214,0.22);
-    }
+    .lead-item:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); }
+    .lead-item.active { border-color: var(--cyan); background: linear-gradient(135deg, rgba(46,230,214,0.14), rgba(139,108,255,0.12)); }
     .li-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-    .li-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .li-name { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .li-email { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .li-hl { font-size: 11.5px; color: #d6e0ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .li-tags { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 
-    /* Detail Pane */
-    .detail-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-    .detail-head {
-      display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px;
-      padding-bottom: 14px; border-bottom: 1px solid var(--border);
-    }
-    .dh-title { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .dh-email { font-size: 13px; color: var(--cyan); display: inline-flex; align-items: center; gap: 7px; margin-top: 3px; }
-    .dh-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .decision-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-    .dec-btn {
-      border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text);
-      padding: 7px 11px; border-radius: 10px; font: 700 12px/1 inherit; cursor: pointer; transition: all .14s;
-    }
-    .dec-btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.25); }
-    .dec-btn.sel-APROBADO { background: rgba(52,211,153,0.24); border-color: var(--green); color: #a7f3d0; }
-    .dec-btn.sel-PAUSADO { background: rgba(255,200,61,0.22); border-color: var(--gold); color: #fde68a; }
-    .dec-btn.sel-DESCARTADO { background: rgba(251,113,133,0.22); border-color: var(--red); color: #fecdd3; }
-    .dec-btn.sel-PENDIENTE { background: rgba(147,160,194,0.18); border-color: var(--muted); }
-    .note-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-    .note-input {
-      flex: 1; min-width: 220px; background: rgba(255,255,255,0.035); border: 1px solid var(--border);
-      color: var(--text); padding: 8px 11px; border-radius: 10px; font-size: 12.5px; outline: none;
-    }
-    .note-input:focus { border-color: var(--cyan); }
-
-    /* Alert Banners */
-    .alert-box {
-      border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 5px;
-      border: 1px solid; font-size: 13px;
-    }
-    .alert-warn { background: rgba(255,200,61,0.11); border-color: rgba(255,200,61,0.42); color: #fef3c7; }
-    .alert-hot { background: rgba(251,113,133,0.12); border-color: rgba(251,113,133,0.45); color: #ffe4e6; }
-    .alert-purple { background: rgba(139,108,255,0.14); border-color: rgba(139,108,255,0.45); color: #ede9fe; }
-    .alert-ok { background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.42); color: #d1fae5; }
-    .alert-title { font-weight: 800; font-size: 13.5px; }
-
-    /* Side-by-Side Response + Spanish Translation */
-    .reply-hero {
-      background: linear-gradient(180deg, rgba(18, 25, 48, 0.94), rgba(14, 19, 36, 0.92));
-      border: 1px solid rgba(46, 230, 214, 0.28); border-radius: var(--radius); padding: 18px;
-      display: flex; flex-direction: column; gap: 14px;
-      box-shadow: 0 12px 38px rgba(0, 0, 0, 0.32);
-    }
-    .reply-hero-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
-    .reply-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .reply-cols.single-col { grid-template-columns: 1fr; }
-    .mail-pane {
-      background: rgba(7, 9, 17, 0.62); border: 1px solid var(--border); border-radius: 14px;
-      padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0;
-    }
-    .mail-pane.es-pane { border-color: rgba(255, 200, 61, 0.28); background: rgba(25, 22, 14, 0.36); }
-    .mail-pane-head {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
-      padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.07);
-    }
-    .mail-pane-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
-    .mail-subj {
-      font-size: 13px; font-weight: 700; color: var(--text);
-      background: rgba(255,255,255,0.04); padding: 8px 10px; border-radius: 9px;
-      border-left: 3px solid var(--cyan); overflow-wrap: anywhere;
-    }
-    .es-pane .mail-subj { border-left-color: var(--gold); }
-    .mail-body {
-      white-space: pre-wrap; font-size: 13.2px; line-height: 1.56; color: #e8eeff;
-      overflow-wrap: anywhere;
-    }
-    .strategy-strip {
-      background: rgba(139, 108, 255, 0.09); border: 1px solid rgba(139, 108, 255, 0.26);
-      border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 12.5px;
-    }
-    .strategy-strip strong { color: #ddd6fe; }
-
-    /* Context Grid */
-    .ctx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    /* Context cards inside drawers */
+    .ctx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .ctx-card {
-      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 16px; display: flex; flex-direction: column; gap: 11px; min-width: 0;
+      background: rgba(255,255,255,0.025); border: 1px solid var(--border); border-radius: 14px;
+      padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0;
     }
-    .ctx-title { font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .mini-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
-    .mst {
-      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 10px; padding: 8px 6px; text-align: center;
-    }
-    .mst-v { font-size: 15px; font-weight: 800; }
+    .mst { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 8px 5px; text-align: center; }
+    .mst-v { font-size: 14.5px; font-weight: 800; }
     .mst-l { font-size: 10px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
     .kv-list { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; }
-    .kv-row { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed rgba(255,255,255,0.06); padding-bottom: 4px; }
-    .kv-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .kv-row { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed rgba(255,255,255,0.07); padding-bottom: 4px; }
+    .kv-row:last-child { border-bottom: 0; }
     .kv-k { color: var(--muted); flex-shrink: 0; }
     .kv-v { text-align: right; font-weight: 600; overflow-wrap: anywhere; }
-    .feat-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-    .feat-chip {
-      padding: 5px 9px; border-radius: 9px; font-size: 11.5px; font-weight: 700;
-      background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08); color: var(--muted);
-    }
+    .feat-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+    .feat-chip { padding: 4px 8px; border-radius: 8px; font-size: 11.5px; font-weight: 700; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08); color: var(--muted); }
     .feat-chip.on { background: rgba(46,230,214,0.13); border-color: rgba(46,230,214,0.34); color: var(--cyan); }
     .feat-chip.hot { background: rgba(255,79,163,0.14); border-color: rgba(255,79,163,0.36); color: #fbcfe8; }
     .feat-chip.warn { background: rgba(255,200,61,0.14); border-color: rgba(255,200,61,0.38); color: #fde68a; }
 
-    /* Email History Timeline */
-    .timeline { display: flex; flex-direction: column; gap: 10px; max-height: 540px; overflow-y: auto; padding-right: 4px; }
-    .msg-card {
-      border-radius: 12px; padding: 12px 14px; border: 1px solid var(--border);
-      background: rgba(255,255,255,0.025); display: flex; flex-direction: column; gap: 7px;
-    }
+    /* Timeline */
+    .timeline { display: flex; flex-direction: column; gap: 10px; max-height: 460px; overflow-y: auto; padding-right: 4px; }
+    .msg-card { border-radius: 12px; padding: 12px 14px; border: 1px solid var(--border); background: rgba(255,255,255,0.025); display: flex; flex-direction: column; gap: 6px; }
     .msg-card.in { border-left: 3.5px solid var(--cyan); background: rgba(46,230,214,0.045); }
     .msg-card.out { border-left: 3.5px solid var(--purple); background: rgba(139,108,255,0.05); }
     .msg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); }
-    .msg-subj { font-size: 12.5px; font-weight: 700; color: var(--text); }
-    .msg-body { white-space: pre-wrap; font-size: 12.5px; line-height: 1.5; color: #dbe4ff; overflow-wrap: anywhere; }
-    details.full-msg { margin-top: 4px; font-size: 11.5px; color: var(--muted); }
-    details.full-msg summary { cursor: pointer; color: var(--cyan); font-weight: 600; }
-    details.full-msg pre {
-      white-space: pre-wrap; font-family: inherit; margin-top: 6px; padding: 10px;
-      border-radius: 8px; background: rgba(0,0,0,0.32); color: #cbd5f5; overflow-wrap: anywhere;
-    }
+    .msg-subj { font-size: 13px; font-weight: 700; }
+    .msg-body { white-space: pre-wrap; font-size: 13px; line-height: 1.52; color: #dbe4ff; overflow-wrap: anywhere; }
 
-    /* Tables & Charts */
-    .charts-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
-    .chart-wrap { position: relative; height: 290px; width: 100%; }
+    /* Summary / ICP / Directory */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+    .kpi-val { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin-top: 6px; }
+    .kpi-foot { margin-top: 6px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .charts-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+    .chart-wrap { position: relative; height: 280px; width: 100%; }
     .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th {
-      text-align: left; padding: 10px 9px; font-size: 10.5px; text-transform: uppercase;
-      letter-spacing: .05em; color: var(--muted); background: rgba(255,255,255,0.035);
-      border-bottom: 1px solid var(--border); white-space: nowrap;
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { text-align: left; padding: 10px 9px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: rgba(255,255,255,0.035); border-bottom: 1px solid var(--border); white-space: nowrap; }
     td { padding: 9px; border-bottom: 1px solid rgba(255,255,255,0.045); vertical-align: top; overflow-wrap: anywhere; }
-    tr:last-child td { border-bottom: 0; }
     tbody tr.clickable { cursor: pointer; }
     tbody tr.clickable:hover td { background: rgba(46,230,214,0.07); }
-
-    /* Funnel bars */
     .funnel-list { display: flex; flex-direction: column; gap: 9px; }
-    .f-row { display: grid; grid-template-columns: 230px 1fr 90px; align-items: center; gap: 10px; font-size: 12.5px; }
-    .f-track { height: 12px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+    .f-row { display: grid; grid-template-columns: 230px 1fr 100px; align-items: center; gap: 10px; font-size: 12.5px; }
+    .f-track { height: 11px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
     .f-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--purple)); }
 
-    /* Toast & Modal */
-    .toast {
-      position: fixed; bottom: 20px; right: 20px; z-index: 90;
-      background: #0e162e; border: 1px solid var(--cyan); color: var(--text);
-      padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 700;
-      box-shadow: 0 12px 34px rgba(0,0,0,0.5);
-    }
+    /* Modals & Autopilot Panel */
     .modal-bg {
-      position: fixed; inset: 0; z-index: 80; background: rgba(3,5,12,0.74); backdrop-filter: blur(8px);
-      display: grid; place-items: center; padding: 20px;
+      position: fixed; inset: 0; z-index: 80; background: rgba(3,5,12,0.78); backdrop-filter: blur(8px);
+      display: grid; place-items: center; padding: 18px;
     }
     .modal-box {
-      width: 100%; max-width: 720px; background: #10162b; border: 1px solid var(--border-hi);
-      border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 14px;
-      max-height: 85vh; overflow: auto;
+      width: 100%; max-width: 720px; background: #10172d; border: 1px solid var(--border-hi);
+      border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 16px;
+      max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 70px rgba(0,0,0,0.65);
+    }
+    .mode-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .mode-card {
+      padding: 15px 14px; border-radius: 16px; border: 1.5px solid var(--border);
+      background: rgba(255,255,255,0.03); cursor: pointer; text-align: left; color: var(--text);
+      display: flex; flex-direction: column; gap: 6px; transition: all .15s;
+    }
+    .mode-card:hover { border-color: rgba(255,255,255,0.28); }
+    .mode-card.sel-PAUSADO { border-color: var(--gold); background: rgba(255,200,61,0.12); }
+    .mode-card.sel-SOLO_APROBADOS { border-color: var(--green-soft); background: rgba(52,211,153,0.13); }
+    .mode-card.sel-PILOTO_AUTOMATICO { border-color: var(--cyan); background: rgba(46,230,214,0.14); }
+    .mode-ico { font-size: 22px; }
+    .mode-t { font-size: 14px; font-weight: 800; }
+    .mode-d { font-size: 12px; color: var(--muted); line-height: 1.42; }
+    .cap-row { display: flex; flex-wrap: nowrap; gap: 6px; }
+    .cap-btn {
+      padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04); color: var(--text); font: 800 12.5px/1 inherit; cursor: pointer;
+      white-space: nowrap;
+    }
+    .cap-btn.active { border-color: var(--cyan); background: rgba(46,230,214,0.18); color: var(--cyan); }
+    .cohort-checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .cohort-chk {
+      display: flex; align-items: center; gap: 8px; font-size: 12.5px;
+      padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .cohort-chk input { accent-color: var(--cyan); width: 16px; height: 16px; }
+    .log-list { display: flex; flex-direction: column; gap: 6px; max-height: 185px; overflow-y: auto; }
+    .log-item {
+      font-size: 12px; padding: 7px 10px; border-radius: 9px; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; gap: 8px;
     }
     .modal-ta {
-      width: 100%; min-height: 220px; background: rgba(0,0,0,0.35); border: 1px solid var(--border);
+      width: 100%; min-height: 200px; background: rgba(0,0,0,0.35); border: 1px solid var(--border);
       color: var(--cyan); border-radius: 12px; padding: 12px; font: 500 12px/1.45 'JetBrains Mono', monospace;
     }
 
-    footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 12px; padding-top: 18px; border-top: 1px solid var(--border); }
-
-    @media (max-width: 1180px) {
-      .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .workspace { grid-template-columns: 320px minmax(0, 1fr); }
-      .reply-cols, .ctx-grid, .charts-grid { grid-template-columns: 1fr; }
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; z-index: 95;
+      background: #0e1832; border: 1.5px solid var(--cyan); color: var(--text);
+      padding: 12px 18px; border-radius: 14px; font-size: 13.5px; font-weight: 700;
+      box-shadow: 0 14px 36px rgba(0,0,0,0.55); max-width: 420px;
     }
-    @media (max-width: 860px) {
+    footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+    @media (max-width: 1060px) {
+      .workspace { grid-template-columns: 300px minmax(0, 1fr); }
       .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .charts-grid, .ctx-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 780px) {
+      header { position: static; }
+      .topbar { padding: 10px 12px; gap: 8px; }
+      .seg { width: 100%; justify-content: space-between; }
+      .seg button { flex: 1; justify-content: center; padding: 8px 6px; font-size: 12px; }
       .workspace { grid-template-columns: 1fr; }
-      .sidebar { position: static; max-height: 430px; }
+      .sidebar { position: static; max-height: 360px; }
+      .mode-grid, .cohort-checks { grid-template-columns: 1fr; }
+      .cap-row { flex-wrap: wrap; }
+      .focus-card { padding: 18px 14px; }
       .f-row { grid-template-columns: 1fr; gap: 4px; }
+      .action-dock > button { width: 100%; flex: 1 1 100%; }
     }
   </style>
 </head>
 <body>
-  <!-- Encrypted Lock Gate (zero internal data in HTML until AES-256-GCM decrypted) -->
+  <!-- Zero-Plaintext AES-256-GCM Lock Gate -->
   <section id="vaultGate" class="vault-screen">
     <div class="vault-card">
       <div class="vault-badge">🔒 Cifrado AES-256-GCM</div>
       <div>
         <h2 class="vault-title">Panel Privado</h2>
-        <p class="vault-sub">Introduce la clave de acceso para descifrar los datos en tu navegador.</p>
+        <p class="vault-sub">Introduce tu clave para descifrar los datos y activar la sincronización automática.</p>
       </div>
       <form id="vaultForm" class="vault-form" method="post" action="#ok" autocomplete="on">
         <input id="vaultUser" class="sr-user" type="text" name="username" value="panel-privado" autocomplete="username" tabindex="-1" aria-hidden="true" />
@@ -425,7 +549,7 @@
         <button id="vaultSubmit" class="vault-btn" type="submit">Desbloquear panel</button>
       </form>
       <div class="vault-foot">
-        Los datos están cifrados de extremo a extremo antes de publicarse. Sin la clave no se puede leer ningún contacto, correo ni métrica.
+        Cifrado de extremo a extremo. Sin la clave no existe ningún dato legible ni acceso a sincronización.
       </div>
     </div>
   </section>
@@ -437,115 +561,214 @@
           <div class="logo-mark" id="brandShort">--</div>
           <div>
             <h1 id="brandTitle">Panel Privado</h1>
-            <div class="brand-sub"><span class="pulse-dot"></span> <span id="updatedAt">Cargando...</span></div>
+            <div class="sync-sub">
+              <span id="syncDot" class="dot dot-busy"></span>
+              <span id="syncLabel">Conectando...</span>
+            </div>
           </div>
         </div>
-        <div class="controls">
-          <div class="seg" id="mainTabs"></div>
-          <a id="rrssLink" class="btn-ghost" href="../">📡 Radar RRSS</a>
-          <a id="sheetLink" class="btn-ghost" href="#" target="_blank" rel="noopener">📊 Google Sheet</a>
-          <button id="exportBtn" class="btn-ghost" type="button">📋 Exportar revisión</button>
-          <button id="lockBtn" class="btn-ghost" type="button" title="Bloquear y olvidar clave">🔒 Bloquear</button>
+
+        <div class="seg" id="mainNav">
+          <button type="button" data-view="focus" class="active">⚡ Revisar (1 a 1)</button>
+          <button type="button" data-view="list">📋 Lista completa</button>
+          <button type="button" data-view="summary">📊 Resumen e ICP</button>
+        </div>
+
+        <div class="right-tools">
+          <button id="autopilotBtn" type="button" class="autopilot-pill ap-SOLO_APROBADOS">🟢 Solo mis OKs</button>
+          <button id="refreshCloudBtn" type="button" class="btn-ghost btn-sm" title="Actualizar estado desde el servidor">🔄</button>
+          <button id="lockBtn" type="button" class="btn-ghost btn-sm" title="Bloquear y olvidar clave">🔒</button>
         </div>
       </div>
     </header>
 
     <main>
-      <section class="kpi-grid" id="kpiGrid"></section>
-
-      <!-- Master-Detail Workspace (Repesca / Clientes / Traktor) -->
-      <section id="workspaceSection" class="workspace">
-        <aside class="sidebar">
-          <div class="sidebar-head">
-            <input id="searchInput" class="search-input" type="search" placeholder="Buscar email, nombre, país, hardware, tema..." />
-            <div class="chip-row" id="cohortChips"></div>
-            <div class="sub-filters">
-              <select id="langSelect" class="sub-select">
-                <option value="ALL">Idioma: Todos</option>
-                <option value="EN">Inglés (EN)</option>
-                <option value="ES">Español (ES)</option>
-                <option value="FR">Francés (FR)</option>
-              </select>
-              <select id="reviewSelect" class="sub-select">
-                <option value="ALL">Revisión: Todos</option>
-                <option value="PENDIENTE">⏳ Pendiente</option>
-                <option value="ENVIADO">✅ Ya enviado</option>
-                <option value="APROBADO">✅ Aprobado</option>
-                <option value="PAUSADO">⏸ Pausado</option>
-                <option value="DESCARTADO">❌ Descartado</option>
-              </select>
-            </div>
-            <div class="list-meta">
-              <span id="listCountLbl">0 contactos</span>
-              <span class="mono">↑ / ↓ navegar</span>
-            </div>
-          </div>
-          <div class="lead-list" id="leadList"></div>
-        </aside>
-
-        <div class="detail-col" id="detailPane"></div>
+      <!-- VIEW 1: ADHD-FRIENDLY FOCUS MODE (DEFAULT) -->
+      <section id="focusView" class="focus-shell">
+        <div class="focus-nav-bar">
+          <div class="bucket-row" id="focusBuckets"></div>
+          <div class="status-strip" id="focusStatusStrip"></div>
+          <div class="prog-track"><div class="prog-fill" id="focusProgFill" style="width:0%"></div></div>
+        </div>
+        <div id="focusCardSlot"></div>
       </section>
 
-      <!-- ICP & Funnel View -->
-      <section id="icpSection" hidden style="display:flex;flex-direction:column;gap:18px;">
+      <!-- VIEW 2: CLASSIC MASTER-DETAIL LIST (Repesca / Clientes / Otro producto) -->
+      <section id="listView" hidden>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;">
+          <div class="seg" id="listSubTabs"></div>
+          <span style="font-size:12.5px;color:var(--muted);">Todos tus OKs y correcciones en español se sincronizan automáticamente en la nube.</span>
+        </div>
+        <div class="workspace">
+          <aside class="sidebar">
+            <div class="sidebar-head">
+              <input id="listSearch" class="search-input" type="search" placeholder="Buscar nombre, email, país, tema..." />
+              <div class="chip-row" id="listChips"></div>
+              <div class="sub-filters">
+                <select id="listLang" class="sub-select">
+                  <option value="ALL">Idioma: Todos</option>
+                  <option value="EN">Inglés (EN)</option>
+                  <option value="ES">Español (ES)</option>
+                  <option value="FR">Francés (FR)</option>
+                </select>
+                <select id="listStateFilter" class="sub-select">
+                  <option value="ALL">Estado: Todos</option>
+                  <option value="PENDIENTE">⏳ Por revisar</option>
+                  <option value="ADAPTADO_LISTO">✨ Adaptado listo</option>
+                  <option value="CORRECCION_SOLICITADA">✏️ Adaptando...</option>
+                  <option value="APROBADO">📤 Con tu OK</option>
+                  <option value="BLOQUEADO_GUARDIA">⚠️ Bloqueado</option>
+                  <option value="PAUSADO">⏸ Ahora no</option>
+                  <option value="DESCARTADO">❌ No enviar</option>
+                  <option value="ENVIADO">✅ Enviado</option>
+                </select>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);">
+                <span id="listCountLbl">0 contactos</span>
+                <span class="mono">↑ / ↓</span>
+              </div>
+            </div>
+            <div class="lead-list" id="leadList"></div>
+          </aside>
+          <div id="listDetailSlot"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: SUMMARY, ICP, PLAYBOOKS & FULL DIRECTORY (ALL 382) -->
+      <section id="summaryView" hidden style="display:flex;flex-direction:column;gap:18px;">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;">
+          <div style="font-size:17px;font-weight:800;">📊 Resumen de Negocio, ICP y Base Completa</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a id="rrssLink" class="btn-ghost btn-sm" href="../">📡 Radar RRSS</a>
+            <a id="sheetLink" class="btn-ghost btn-sm" href="#" target="_blank" rel="noopener">📊 Google Sheet</a>
+            <button id="exportBtn" class="btn-ghost btn-sm" type="button">📋 Exportar respaldo</button>
+          </div>
+        </div>
+        <section class="kpi-grid" id="kpiGrid"></section>
         <div class="charts-grid">
           <div class="card">
-            <div class="ctx-title" style="margin-bottom:12px">📈 Evolución Mensual · Instalaciones vs Ventas Stripe</div>
+            <div style="font-size:14.5px;font-weight:800;margin-bottom:12px;">📈 Evolución Mensual · Instalaciones vs Ventas</div>
             <div class="chart-wrap"><canvas id="monthlyChart"></canvas></div>
           </div>
           <div class="card">
-            <div class="ctx-title" style="margin-bottom:12px">⚡ ICP Real · Compradores Stripe vs No-Compradores (%)</div>
+            <div style="font-size:14.5px;font-weight:800;margin-bottom:12px;">⚡ ICP Real · Compradores vs No-Compradores (%)</div>
             <div class="chart-wrap"><canvas id="icpCompareChart"></canvas></div>
           </div>
         </div>
         <div class="card">
-          <div class="ctx-title" style="margin-bottom:14px">🔬 Embudo de Activación & Conversión Real</div>
+          <div style="font-size:14.5px;font-weight:800;margin-bottom:14px;">🔬 Embudo de Activación y Conversión</div>
           <div class="funnel-list" id="funnelBars"></div>
         </div>
         <div class="card">
-          <div class="ctx-title" style="margin-bottom:14px">🧭 Playbooks de Repesca Stealth (Anti-Telemetría)</div>
-          <div class="table-wrap" id="playbooksTable"></div>
-        </div>
-      </section>
-
-      <!-- Full Directory View (All 382) -->
-      <section id="allSection" class="card" hidden>
-        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;">
-          <div class="ctx-title">🗂️ Base Completa de Leads y Clientes (haz clic en cualquier fila para ver todo su contexto)</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <select id="dirProductFilter" class="sub-select" style="min-width:170px">
-              <option value="ALL">Todos los productos</option>
-              <option value="DJMIRROR_PULSE">Producto principal</option>
-              <option value="DJMIRROR_TRAKTOR_LEGACY">Producto previo (legacy)</option>
-            </select>
-            <input id="dirSearch" class="search-input" style="width:280px" type="search" placeholder="Filtrar email, nombre, cohorte, país..." />
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;">
+            <div style="font-size:14.5px;font-weight:800;">🗂️ Base Completa (haz clic en cualquier fila para abrir su ficha)</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <select id="dirProductFilter" class="sub-select" style="min-width:170px">
+                <option value="ALL">Todos los productos</option>
+                <option value="DJMIRROR_PULSE">Producto principal</option>
+                <option value="DJMIRROR_TRAKTOR_LEGACY">Producto previo (legacy)</option>
+              </select>
+              <input id="dirSearch" class="search-input" style="width:260px" type="search" placeholder="Filtrar email, nombre, país..." />
+            </div>
           </div>
+          <div class="table-wrap" id="dirTableWrap"></div>
         </div>
-        <div class="table-wrap" id="dirTableWrap"></div>
+        <div id="dirInspectorSlot" hidden></div>
+        <details class="drawer">
+          <summary>🧭 Ver Playbooks de Repesca Anti-Telemetría</summary>
+          <div class="drawer-body"><div class="table-wrap" id="playbooksTable"></div></div>
+        </details>
       </section>
-
-      <!-- Standalone Directory Inspector (for contacts outside Queue / Customers / Traktor tabs) -->
-      <section id="dirInspectorSection" class="detail-col" hidden></section>
 
       <footer id="footerText"></footer>
     </main>
   </div>
 
-  <!-- Export Review Modal -->
+  <!-- AUTOPILOT & SENDING CONTROL MODAL -->
+  <div id="autopilotModal" class="modal-bg" hidden>
+    <div class="modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <h3 style="font-size:19px;font-weight:800;">🤖 Control de Envíos y Piloto Automático</h3>
+        <button id="closeApModalBtn" class="btn-ghost btn-sm" type="button">✕ Cerrar</button>
+      </div>
+
+      <div id="apWorkerBanner" class="state-banner sb-adapt" style="font-size:13px;"></div>
+
+      <div>
+        <span class="field-lbl">1. Elige cómo quieres que trabaje el sistema</span>
+        <div class="mode-grid" id="apModeGrid">
+          <button type="button" class="mode-card" data-ap-mode="PAUSADO">
+            <span class="mode-ico">⏸️</span>
+            <span class="mode-t">Pausado</span>
+            <span class="mode-d">Adapta tus correcciones en castellano, pero NO envía ningún correo.</span>
+          </button>
+          <button type="button" class="mode-card" data-ap-mode="SOLO_APROBADOS">
+            <span class="mode-ico">🟢</span>
+            <span class="mode-t">Solo mis OKs</span>
+            <span class="mode-d">Cada 15 min envía únicamente los correos a los que tú diste ✅ OK.</span>
+          </button>
+          <button type="button" class="mode-card" data-ap-mode="PILOTO_AUTOMATICO">
+            <span class="mode-ico">🤖</span>
+            <span class="mode-t">Piloto Automático</span>
+            <span class="mode-d">Envía leads seguros (R1–R6) respetando tu tope diario. Nunca toca hilos R0 ni clientes.</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <span class="field-lbl">2. Máximo de correos al día</span>
+          <div class="cap-row" id="apCapRow">
+            <button type="button" class="cap-btn" data-cap="3">3/día</button>
+            <button type="button" class="cap-btn" data-cap="5">5/día</button>
+            <button type="button" class="cap-btn" data-cap="8">8/día</button>
+            <button type="button" class="cap-btn" data-cap="10">10/día</button>
+            <button type="button" class="cap-btn" data-cap="12">12/día</button>
+          </div>
+        </div>
+        <div>
+          <span class="field-lbl">3. Horario de envío (CET Madrid)</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input id="apWinStart" class="search-input mono" type="time" value="08:30" style="width:120px" />
+            <span style="color:var(--muted);font-weight:700;">a</span>
+            <input id="apWinEnd" class="search-input mono" type="time" value="22:00" style="width:120px" />
+          </div>
+        </div>
+      </div>
+
+      <div id="apCohortsWrap">
+        <span class="field-lbl">4. Cohortes permitidas si activas Piloto Automático</span>
+        <div class="cohort-checks" id="apCohortsGrid"></div>
+        <div style="margin-top:8px;font-size:12px;color:#a7f3d0;background:rgba(52,211,153,0.09);border:1px solid rgba(52,211,153,0.28);padding:9px 12px;border-radius:11px;">
+          🔒 <strong>Bloqueo permanente de seguridad:</strong> Los hilos reales 1:1 (R0), los clientes con licencia y los contactos de otro producto <strong>NUNCA</strong> se envían en piloto automático. Siempre esperan tu OK manual.
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding-top:4px;">
+        <button id="apPauseAllBtn" type="button" class="btn-ghost" style="border-color:rgba(255,200,61,0.45);color:var(--gold);">⏸️ Pausar envíos ahora</button>
+        <button id="apSaveBtn" type="button" class="btn-primary-ok" style="flex:0 0 auto;min-width:190px;min-height:46px;font-size:14.5px;">💾 Guardar configuración</button>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:14px;">
+        <span class="field-lbl">Actividad reciente del sistema</span>
+        <div class="log-list" id="apActivityLog"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT BACKUP MODAL -->
   <div id="exportModal" class="modal-bg" hidden>
     <div class="modal-box">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <h3 style="font-size:17px;font-weight:800;">📋 Exportar Decisiones de Revisión</h3>
-        <button id="closeModalBtn" class="btn-ghost btn-sm" type="button">✕ Cerrar</button>
+        <h3 style="font-size:17px;font-weight:800;">📋 Respaldo de Decisiones</h3>
+        <button id="closeExportBtn" class="btn-ghost btn-sm" type="button">✕ Cerrar</button>
       </div>
-      <p style="font-size:12.5px;color:var(--muted);">
-        Tus decisiones locales (Aprobado / Pausado / Descartado y notas) se guardan en este navegador.
-        Puedes copiar este resumen TSV para pegarlo en Google Sheets o enviármelo directamente en el chat para ejecutar los borradores IMAP / envíos.
+      <p style="font-size:13px;color:var(--muted);">
+        Tus decisiones ya se guardan automáticamente en tu servidor seguro. Aquí tienes una copia en texto por si alguna vez quieres pegarla en Google Sheets o en el chat.
       </p>
       <textarea id="exportTa" class="modal-ta" readonly></textarea>
-      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button id="copyExportBtn" class="btn-ghost" type="button">📋 Copiar todo</button>
-        <button id="clearReviewBtn" class="btn-ghost" type="button" style="border-color:rgba(251,113,133,0.4);color:var(--red);">🗑️ Borrar marcas locales</button>
       </div>
     </div>
   </div>
@@ -554,7 +777,8 @@
 
   <script>
     const STORAGE_KEY = 'radar_vault_key_v1';
-    const REVIEW_KEY = 'panel_leads_review_state_v1';
+    const LOCAL_CACHE_KEY = 'panel_leads_cloud_cache_v2';
+    const PENDING_QUEUE_KEY = 'panel_leads_pending_sync_v2';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const fmt = (n) => Number(n || 0).toLocaleString('es-ES');
@@ -564,64 +788,89 @@
       const u = cc.toUpperCase();
       return String.fromCodePoint(...[...u].map((c) => 127397 + c.charCodeAt(0)));
     };
+    const langPill = (lang) => {
+      const l = String(lang || 'EN').toUpperCase();
+      if (l === 'ES') return '<span class="pill pill-gold">🇪🇸 Recibe en Español</span>';
+      if (l === 'FR') return '<span class="pill pill-blue">🇫🇷 Recibe en Francés</span>';
+      return '<span class="pill pill-cyan">🇬🇧 Recibe en Inglés</span>';
+    };
 
-    const COHORT_META = {
-      R0_INBOUND_URGENTE_2026: { short: '🔥 R0 Urgente', cls: 'pill-red' },
-      R0_INBOUND_SEGUIMIENTO_2026: { short: '💬 R0 Hilo 2026', cls: 'pill-magenta' },
-      R1_INTENCION_COMPRA_FRICCION: { short: '💳 R1 Intención', cls: 'pill-gold' },
-      R4_DMX_NDI_PANTALLA_PRO: { short: '🎛️ R4 DMX/NDI', cls: 'pill-cyan' },
-      R2_POWER_USER_ABANDONADO: { short: '⚡ R2 Power', cls: 'pill-purple' },
-      R3_HARDWARE_PRO_ACTIVACION: { short: '🎧 R3 HW Pro', cls: 'pill-blue' },
-      R6_TRIAL_RECIENTE_ACTIVO: { short: '🌱 R6 Trial ≤14d', cls: 'pill-green' },
-      R5_PERSONALIZADOR_VISUAL: { short: '🎨 R5 Visual', cls: 'pill-muted' },
-      C_CLIENTE_RETENCION: { short: '💎 Cliente Full', cls: 'pill-green' },
-      R8_LEGACY_TRAKTOR: { short: '🎛️ Legacy', cls: 'pill-purple' },
-      R8_PATREON_SIN_DESCARGA: { short: '🅿️ Patreon sin app', cls: 'pill-muted' },
-      R7_BAJA_ACTIVACION_REENGAGE: { short: 'R7 Baja act.', cls: 'pill-muted' },
+    const SAFE_AUTOPILOT_COHORTS = [
+      { id: 'R1_INTENCION_COMPRA_FRICCION', label: '💳 R1 · Casi compran / fricción' },
+      { id: 'R4_DMX_NDI_PANTALLA_PRO', label: '🎛️ R4 · Perfil DMX / NDI / Pantalla' },
+      { id: 'R2_POWER_USER_ABANDONADO', label: '⚡ R2 · Power users inactivos' },
+      { id: 'R3_HARDWARE_PRO_ACTIVACION', label: '🎧 R3 · DJs con equipo Pro' },
+      { id: 'R6_TRIAL_RECIENTE_ACTIVO', label: '🌱 R6 · Trials recientes (≤14d)' },
+      { id: 'R5_PERSONALIZADOR_VISUAL', label: '🎨 R5 · Visuales y logo' },
+    ];
+
+    const COHORT_HUMAN = {
+      R0_INBOUND_URGENTE_2026: { short: '🔥 Espera respuesta', cls: 'pill-red' },
+      R0_INBOUND_SEGUIMIENTO_2026: { short: '💬 Hilo 2026', cls: 'pill-purple' },
+      R1_INTENCION_COMPRA_FRICCION: { short: '💳 Casi compra', cls: 'pill-gold' },
+      R4_DMX_NDI_PANTALLA_PRO: { short: '🎛️ DMX / NDI', cls: 'pill-cyan' },
+      R2_POWER_USER_ABANDONADO: { short: '⚡ Lo probó mucho', cls: 'pill-purple' },
+      R3_HARDWARE_PRO_ACTIVACION: { short: '🎧 Equipo Pro', cls: 'pill-blue' },
+      R6_TRIAL_RECIENTE_ACTIVO: { short: '🌱 Trial nuevo', cls: 'pill-green' },
+      R5_PERSONALIZADOR_VISUAL: { short: '🎨 Visuales/Logo', cls: 'pill-muted' },
+      C_CLIENTE_RETENCION: { short: '💎 Cliente', cls: 'pill-green' },
+      R8_LEGACY_TRAKTOR: { short: '🎛️ Otro producto', cls: 'pill-purple' },
+      R8_PATREON_SIN_DESCARGA: { short: '🅿️ Patreon', cls: 'pill-muted' },
+      R7_BAJA_ACTIVACION_REENGAGE: { short: 'Baja activación', cls: 'pill-muted' },
     };
 
     let ENVELOPE = null;
     let DATA = null;
+    let SYNC_TOKEN = '';
     let BOUND = false;
+    let POLL_TIMER = null;
     let monthlyChart = null;
     let icpCompareChart = null;
-    let REVIEW = {};
+    let cloudOnline = false;
+    let syncingNow = false;
 
-    const state = {
-      tab: 'queue',       // queue | customers | traktor | icp | all
-      subFilter: 'ALL',
-      lang: 'ALL',
-      reviewFilter: 'ALL',
-      search: '',
-      selectedEmail: '',
-      dirSearch: '',
-      dirProduct: 'ALL',
-      allSelectedEmail: '',
+    // Cloud state (decisions, autopilot, worker_status, activity_log)
+    let CLOUD = {
+      version: 0,
+      updated_at: '',
+      autopilot: {
+        mode: 'SOLO_APROBADOS',
+        daily_cap: 10,
+        window_start_cet: '08:30',
+        window_end_cet: '22:00',
+        allowed_cohorts: SAFE_AUTOPILOT_COHORTS.map((c) => c.id),
+      },
+      decisions: {},
+      worker_status: { last_run_at: '', sent_today: 0, daily_cap: 10, interval_minutes: 15, in_window: true },
+      activity_log: [],
     };
 
-    function loadReview() {
-      try { REVIEW = JSON.parse(localStorage.getItem(REVIEW_KEY) || '{}') || {}; }
-      catch (_) { REVIEW = {}; }
-    }
-    function saveReview() {
-      try { localStorage.setItem(REVIEW_KEY, JSON.stringify(REVIEW)); } catch (_) {}
-    }
-    function getReview(email) {
-      return REVIEW[email.toLowerCase()] || { status: 'PENDIENTE', note: '' };
-    }
-    function setReview(email, patch) {
-      const k = email.toLowerCase();
-      REVIEW[k] = { ...getReview(k), ...patch, ts: new Date().toISOString().slice(0, 16) };
-      saveReview();
-    }
+    // Unsaved draft edits keyed by email so navigating/polling never loses Carlos's typing!
+    const DRAFTS_BUFFER = {};
+
+    const state = {
+      view: 'focus',          // focus | list | summary
+      focusBucket: 'priority', // priority | queue | customers | track
+      focusEmail: '',
+      listTab: 'queue',       // queue | customers | traktor
+      listSubFilter: 'ALL',
+      listLang: 'ALL',
+      listState: 'ALL',
+      listSearch: '',
+      listSelectedEmail: '',
+      dirSearch: '',
+      dirProduct: 'ALL',
+      dirSelectedEmail: '',
+      apDraft: null,
+    };
 
     let toastTimer = null;
-    function showToast(msg) {
+    function showToast(msg, ms = 2600) {
       const el = document.getElementById('toast');
       el.textContent = msg;
       el.hidden = false;
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { el.hidden = true; }, 2200);
+      toastTimer = setTimeout(() => { el.hidden = true; }, ms);
     }
 
     async function copyText(txt, label) {
@@ -641,6 +890,17 @@
       const out = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
       return out;
+    }
+
+    async function deriveSyncToken(password, saltStr, iterations) {
+      const enc = new TextEncoder();
+      const keyMat = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+      const bits = await crypto.subtle.deriveBits(
+        { name: 'PBKDF2', salt: enc.encode(saltStr || 'djm-repesca-sync-v1'), iterations: iterations || 310000, hash: 'SHA-256' },
+        keyMat,
+        256
+      );
+      return Array.from(new Uint8Array(bits)).map((b) => b.toString(16).padStart(2, '0')).join('');
     }
 
     async function decryptEnvelope(env, password) {
@@ -671,699 +931,977 @@
       return JSON.parse(new TextDecoder().decode(plainBuf));
     }
 
-    function isTraktorOrOther(c) {
-      return !!c.is_traktor_tab;
+    // ── Cloud Sync Engine ───────────────────────────────────────────────────
+    function saveLocalCloudCache() {
+      try { localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(CLOUD)); } catch (_) {}
+    }
+    function loadLocalCloudCache() {
+      try {
+        const cached = JSON.parse(localStorage.getItem(LOCAL_CACHE_KEY) || 'null');
+        if (cached && typeof cached === 'object') {
+          if (getPendingOps().length > 0 || (cached.version || 0) >= (CLOUD.version || 0)) {
+            mergeCloudState(cached);
+          }
+        }
+      } catch (_) {}
+    }
+    function getPendingOps() {
+      try { return JSON.parse(localStorage.getItem(PENDING_QUEUE_KEY) || '[]') || []; }
+      catch (_) { return []; }
+    }
+    function setPendingOps(ops) {
+      try { localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(ops)); } catch (_) {}
     }
 
-    function getBaseListForTab(tab) {
-      const all = DATA.contacts || [];
-      if (tab === 'queue') {
-        return all.filter((c) => c.in_queue).sort((a, b) => (a.queue_rank || 999) - (b.queue_rank || 999));
+    function mergeCloudState(incoming) {
+      if (!incoming || typeof incoming !== 'object') return;
+      CLOUD = {
+        version: incoming.version || CLOUD.version || 0,
+        updated_at: incoming.updated_at || CLOUD.updated_at || '',
+        autopilot: { ...CLOUD.autopilot, ...(incoming.autopilot || {}) },
+        decisions: { ...(incoming.decisions || {}) },
+        worker_status: { ...CLOUD.worker_status, ...(incoming.worker_status || {}) },
+        activity_log: Array.isArray(incoming.activity_log) ? incoming.activity_log : (CLOUD.activity_log || []),
+      };
+      saveLocalCloudCache();
+    }
+
+    function updateHeaderSyncUI() {
+      const dot = document.getElementById('syncDot');
+      const lbl = document.getElementById('syncLabel');
+      const pendingCnt = getPendingOps().length;
+      const ws = CLOUD.worker_status || {};
+      const lastRun = ws.last_run_at ? ` · Últ. revisión Mac: ${ws.last_run_at.slice(11)}` : '';
+
+      if (syncingNow) {
+        dot.className = 'dot dot-busy';
+        lbl.textContent = 'Guardando en tu servidor...';
+      } else if (cloudOnline && pendingCnt === 0) {
+        dot.className = 'dot dot-ok';
+        lbl.textContent = `☁️ Sincronizado${lastRun}`;
+      } else if (pendingCnt > 0) {
+        dot.className = 'dot dot-busy';
+        lbl.textContent = `📱 ${pendingCnt} cambio(s) local(es) · reintentando subir...`;
+      } else {
+        dot.className = 'dot dot-off';
+        lbl.textContent = '⚠️ Sin conexión al servidor (modo local)';
       }
-      if (tab === 'customers') {
-        return all.filter((c) => c.is_customer).sort((a, b) => (a.customer_priority_rank ?? 9) - (b.customer_priority_rank ?? 9) || (b.revenue_usd - a.revenue_usd) || (b.telemetry.estimated_hours - a.telemetry.estimated_hours));
+
+      const ap = CLOUD.autopilot || {};
+      const mode = ap.mode || 'SOLO_APROBADOS';
+      const sentToday = ws.sent_today ?? (DATA?.queue_summary?.sent_count || 0);
+      const cap = ap.daily_cap || 10;
+      const apBtn = document.getElementById('autopilotBtn');
+      apBtn.className = `autopilot-pill ap-${mode}`;
+      if (mode === 'PAUSADO') apBtn.textContent = `⏸️ Envíos pausados`;
+      else if (mode === 'PILOTO_AUTOMATICO') apBtn.textContent = `🤖 Piloto Auto ON · ${sentToday}/${cap} hoy`;
+      else apBtn.textContent = `🟢 Solo mis OKs · ${sentToday}/${cap} hoy`;
+    }
+
+    async function apiCall(path, method = 'GET', bodyObj = null) {
+      const base = DATA?.sync_api_url;
+      if (!base || !SYNC_TOKEN) throw new Error('Sync API not configured');
+      const url = method === 'GET' ? `${base}${path}?_t=${Date.now()}` : `${base}${path}`;
+      const headers = { 'X-Repesca-Token': SYNC_TOKEN };
+      if (bodyObj !== null) headers['Content-Type'] = 'application/json';
+      const resp = await fetch(url, {
+        method,
+        headers,
+        body: bodyObj !== null ? JSON.stringify(bodyObj) : undefined,
+        cache: 'no-store',
+      });
+      if (!resp.ok) {
+        const err = new Error(`HTTP ${resp.status}`);
+        err.status = resp.status;
+        throw err;
       }
-      if (tab === 'traktor') {
-        return all.filter(isTraktorOrOther).sort((a, b) => (b.email_meta.last_date || '').localeCompare(a.email_meta.last_date || ''));
+      return await resp.json();
+    }
+
+    async function flushPendingOps() {
+      const ops = getPendingOps();
+      if (!ops.length) return;
+      const remaining = [];
+      for (const op of ops) {
+        try {
+          await apiCall(op.path, 'POST', op.payload);
+        } catch (_) {
+          remaining.push(op);
+        }
       }
-      return all;
+      setPendingOps(remaining);
+    }
+
+    async function pullCloudState(silent = false) {
+      if (!DATA?.sync_api_url || !SYNC_TOKEN) return;
+      syncingNow = !silent;
+      if (!silent) updateHeaderSyncUI();
+      try {
+        await flushPendingOps();
+        const fresh = await apiCall('/state', 'GET');
+        mergeCloudState(fresh);
+        cloudOnline = true;
+      } catch (_) {
+        cloudOnline = false;
+      } finally {
+        syncingNow = false;
+        updateHeaderSyncUI();
+        // Don't re-render while user is actively typing in a textarea/input!
+        const tag = (document.activeElement?.tagName || '').toLowerCase();
+        if (tag !== 'textarea' && tag !== 'input') {
+          renderCurrentView();
+        }
+      }
+    }
+
+    async function pushDecision(email, payload) {
+      const em = email.toLowerCase();
+      // Optimistic local merge so UI feels instant
+      const prev = CLOUD.decisions[em] || {};
+      const next = {
+        ...prev,
+        ...payload,
+        updated_at: new Date().toISOString().slice(0, 19) + 'Z',
+      };
+      if (payload.clear_edits) {
+        next.edited_subject_es = '';
+        next.edited_body_es = '';
+        next.correction_note = '';
+        next.adapted_subject = '';
+        next.adapted_body = '';
+        next.adapted_subject_es = '';
+        next.adapted_body_es = '';
+        next.change_summary_es = '';
+        next.stealth_guard = '';
+        next.guard_violations = [];
+      }
+      CLOUD.decisions[em] = next;
+      delete DRAFTS_BUFFER[em];
+      saveLocalCloudCache();
+
+      syncingNow = true;
+      updateHeaderSyncUI();
+      const body = { email: em, ...payload };
+      try {
+        const res = await apiCall('/decision', 'POST', body);
+        if (res && res.entry) {
+          CLOUD.decisions[em] = res.entry;
+          CLOUD.version = res.version || CLOUD.version;
+          saveLocalCloudCache();
+        }
+        cloudOnline = true;
+      } catch (_) {
+        cloudOnline = false;
+        const ops = getPendingOps().filter((o) => !(o.path === '/decision' && o.payload?.email === em));
+        ops.push({ path: '/decision', payload: body });
+        setPendingOps(ops);
+      } finally {
+        syncingNow = false;
+        updateHeaderSyncUI();
+      }
+    }
+
+    async function pushAutopilot(apPayload) {
+      CLOUD.autopilot = { ...CLOUD.autopilot, ...apPayload };
+      saveLocalCloudCache();
+      syncingNow = true;
+      updateHeaderSyncUI();
+      try {
+        const res = await apiCall('/autopilot', 'POST', apPayload);
+        if (res && res.autopilot) {
+          CLOUD.autopilot = res.autopilot;
+          CLOUD.version = res.version || CLOUD.version;
+          saveLocalCloudCache();
+        }
+        cloudOnline = true;
+        showToast('✅ Configuración guardada en la nube');
+      } catch (_) {
+        cloudOnline = false;
+        const ops = getPendingOps().filter((o) => o.path !== '/autopilot');
+        ops.push({ path: '/autopilot', payload: apPayload });
+        setPendingOps(ops);
+        showToast('📱 Guardado local (se subirá al recuperar conexión)');
+      } finally {
+        syncingNow = false;
+        updateHeaderSyncUI();
+      }
+    }
+
+    // ── Contact State Helpers ───────────────────────────────────────────────
+    function getCloudEntry(email) {
+      return CLOUD.decisions[email.toLowerCase()] || null;
     }
 
     function isReplySent(c) {
-      return !!(c?.reply && (c.reply.delivery_state === 'ENVIADO' || c.reply.aprobacion_carlos === 'ENVIADO'));
-    }
-    function effectiveReviewStatus(c) {
-      if (isReplySent(c)) return 'ENVIADO';
-      return getReview(c.email).status;
+      if (c?.reply && (c.reply.delivery_state === 'ENVIADO' || c.reply.aprobacion_carlos === 'ENVIADO')) return true;
+      const d = getCloudEntry(c.email);
+      return !!(d && d.decision === 'ENVIADO');
     }
 
-    function getFilteredList() {
-      let list = getBaseListForTab(state.tab);
-      if (state.subFilter !== 'ALL') {
-        if (state.tab === 'queue') {
-          list = list.filter((c) => c.cohort === state.subFilter);
-        } else if (state.tab === 'customers') {
-          if (state.subFilter === 'URGENT') list = list.filter((c) => ['ACCION_URGENTE_CLIENTE','BIENVENIDA_NUEVO_COMPRADOR','JOYA_B2B_CASO_ESTUDIO'].includes(c.reply?.priority_tag));
-          else if (state.subFilter === 'STRIPE') list = list.filter((c) => c.license_category === 'COMPRADOR_STRIPE');
-          else if (state.subFilter === 'NON_STRIPE') list = list.filter((c) => c.license_category !== 'COMPRADOR_STRIPE');
-          else if (state.subFilter === 'ACTIVE') list = list.filter((c) => c.telemetry.days_inactive !== null && c.telemetry.days_inactive <= 14);
-          else if (state.subFilter === 'INACTIVE') list = list.filter((c) => c.telemetry.days_inactive === null || c.telemetry.days_inactive > 45);
-        } else if (state.tab === 'traktor') {
-          if (state.subFilter === 'TRAKTOR_2026') list = list.filter((c) => c.product_line === 'DJMIRROR_TRAKTOR_LEGACY' && (c.email_meta.last_date || '') >= '2026-01-01');
-          else if (state.subFilter === 'TRAKTOR_2025') list = list.filter((c) => c.product_line === 'DJMIRROR_TRAKTOR_LEGACY' && (c.email_meta.last_date || '') < '2026-01-01');
-          else if (state.subFilter === 'COLLABS') list = list.filter((c) => c.product_line !== 'DJMIRROR_TRAKTOR_LEGACY');
+    function effectiveStatus(c) {
+      if (isReplySent(c)) return 'ENVIADO';
+      const d = getCloudEntry(c.email);
+      return (d && d.decision) ? d.decision : 'PENDIENTE';
+    }
+
+    function effectiveReply(c) {
+      const rep = c.reply;
+      if (!rep) return null;
+      const d = getCloudEntry(c.email) || {};
+      const hasAdapted = !!(d.adapted_subject && d.adapted_body);
+      const subj = hasAdapted ? d.adapted_subject : rep.subject;
+      const body = hasAdapted ? d.adapted_body : rep.body;
+      const subjEsBase = hasAdapted ? (d.adapted_subject_es || rep.subject_es) : (rep.subject_es || rep.subject);
+      const bodyEsBase = hasAdapted ? (d.adapted_body_es || rep.body_es) : (rep.body_es || rep.body);
+      // If Carlos submitted a pending correction not yet adapted, show his latest Spanish text
+      const waitingAdapt = d.decision === 'CORRECCION_SOLICITADA';
+      const shownSubjEs = (waitingAdapt && d.edited_subject_es) ? d.edited_subject_es : subjEsBase;
+      const shownBodyEs = (waitingAdapt && d.edited_body_es) ? d.edited_body_es : bodyEsBase;
+      return {
+        ...rep,
+        subject: subj,
+        body: body,
+        subject_es: shownSubjEs,
+        body_es: shownBodyEs,
+        orig_subject_es: rep.orig_subject_es || rep.subject_es || rep.subject,
+        orig_body_es: rep.orig_body_es || rep.body_es || rep.body,
+        change_summary_es: d.change_summary_es || rep.change_summary_es || '',
+        guard_violations: d.guard_violations || [],
+        correction_note: d.correction_note || '',
+        approve_after_adapt: !!d.approve_after_adapt,
+        internal_note: d.internal_note || '',
+        sent_at: d.sent_at || rep.sent_at || '',
+        sent_by: d.sent_by || '',
+        has_adapted: hasAdapted,
+      };
+    }
+
+    function statusBadgeHtml(st, sentAt = '') {
+      if (st === 'ENVIADO') {
+        const ts = sentAt ? ' · ' + sentAt.replace('T', ' ').slice(5, 16) : '';
+        return `<span class="pill pill-green">✅ Enviado${esc(ts)}</span>`;
+      }
+      if (st === 'APROBADO') return '<span class="pill pill-green">📤 Con tu OK</span>';
+      if (st === 'ADAPTADO_LISTO') return '<span class="pill pill-cyan">✨ Adaptado · falta OK</span>';
+      if (st === 'CORRECCION_SOLICITADA') return '<span class="pill pill-gold">✏️ Adaptando...</span>';
+      if (st === 'BLOQUEADO_GUARDIA') return '<span class="pill pill-red">⚠️ Revisar bloqueo</span>';
+      if (st === 'PAUSADO') return '<span class="pill pill-muted">⏸ Ahora no</span>';
+      if (st === 'DESCARTADO') return '<span class="pill pill-red">❌ Descartado</span>';
+      return '<span class="pill pill-muted">⏳ Por revisar</span>';
+    }
+
+    function isActionablePending(c) {
+      const st = effectiveStatus(c);
+      return st === 'PENDIENTE' || st === 'ADAPTADO_LISTO' || st === 'BLOQUEADO_GUARDIA';
+    }
+
+    function getFocusBucketList(bucket) {
+      const all = (DATA?.contacts || []).filter((c) => !!c.reply && !c.is_traktor_tab);
+      const priorityRank = (c) => {
+        const st = effectiveStatus(c);
+        const adaptBoost = (st === 'ADAPTADO_LISTO' || st === 'BLOQUEADO_GUARDIA') ? -500 : 0;
+        if (c.in_queue && c.cohort === 'R0_INBOUND_URGENTE_2026') return adaptBoost + 10 + (c.queue_rank || 0);
+        if (c.is_customer && c.is_priority_today) return adaptBoost + 20 + (c.customer_priority_rank ?? 5);
+        if (c.in_queue && c.cohort === 'R0_INBOUND_SEGUIMIENTO_2026') return adaptBoost + 40 + (c.queue_rank || 0);
+        if (c.in_queue) return adaptBoost + 100 + (c.queue_rank || 999);
+        if (c.is_customer) return adaptBoost + 500 + (c.customer_priority_rank ?? 9);
+        return adaptBoost + 900;
+      };
+
+      if (bucket === 'priority') {
+        return all
+          .filter((c) => isActionablePending(c) && (
+            c.is_priority_today ||
+            effectiveStatus(c) === 'ADAPTADO_LISTO' ||
+            effectiveStatus(c) === 'BLOQUEADO_GUARDIA'
+          ))
+          .sort((a, b) => priorityRank(a) - priorityRank(b));
+      }
+      if (bucket === 'queue') {
+        return all
+          .filter((c) => c.in_queue && isActionablePending(c))
+          .sort((a, b) => priorityRank(a) - priorityRank(b));
+      }
+      if (bucket === 'customers') {
+        return all
+          .filter((c) => c.is_customer && isActionablePending(c))
+          .sort((a, b) => priorityRank(a) - priorityRank(b));
+      }
+      if (bucket === 'track') {
+        const order = { ADAPTADO_LISTO: 0, BLOQUEADO_GUARDIA: 1, CORRECCION_SOLICITADA: 2, APROBADO: 3, ENVIADO: 4, PAUSADO: 5, DESCARTADO: 6 };
+        return all
+          .filter((c) => effectiveStatus(c) !== 'PENDIENTE')
+          .sort((a, b) => (order[effectiveStatus(a)] ?? 9) - (order[effectiveStatus(b)] ?? 9) || priorityRank(a) - priorityRank(b));
+      }
+      return [];
+    }
+
+    // ── Render Focus Mode (Default ADHD View) ───────────────────────────────
+    function renderFocusView() {
+      const prioList = getFocusBucketList('priority');
+      const queueList = getFocusBucketList('queue');
+      const custList = getFocusBucketList('customers');
+      const trackList = getFocusBucketList('track');
+
+      const buckets = [
+        { id: 'priority', label: '🔥 Prioritarios hoy', cnt: prioList.length },
+        { id: 'queue', label: '🎯 Repesca pendiente', cnt: queueList.length },
+        { id: 'customers', label: '💎 Clientes', cnt: custList.length },
+        { id: 'track', label: '📬 En marcha / Enviados', cnt: trackList.length },
+      ];
+      document.getElementById('focusBuckets').innerHTML = buckets.map((b) => `
+        <button type="button" class="bucket-btn ${state.focusBucket === b.id ? 'active' : ''}" data-bucket="${b.id}">
+          <span>${b.label}</span>
+          <span class="bucket-cnt mono">${b.cnt}</span>
+        </button>
+      `).join('');
+
+      const allReplyable = (DATA?.contacts || []).filter((c) => !!c.reply && !c.is_traktor_tab);
+      const cntApproved = allReplyable.filter((c) => effectiveStatus(c) === 'APROBADO').length;
+      const cntAdapting = allReplyable.filter((c) => effectiveStatus(c) === 'CORRECCION_SOLICITADA').length;
+      const cntReady = allReplyable.filter((c) => effectiveStatus(c) === 'ADAPTADO_LISTO').length;
+      const cntSent = allReplyable.filter((c) => effectiveStatus(c) === 'ENVIADO').length;
+      const cntDone = allReplyable.filter((c) => effectiveStatus(c) !== 'PENDIENTE').length;
+      const pct = allReplyable.length ? Math.round((cntDone / allReplyable.length) * 100) : 0;
+
+      document.getElementById('focusStatusStrip').innerHTML = `
+        <div class="status-chips">
+          <span class="stat-mini">📤 Con tu OK: <span class="mono" style="color:var(--green-soft)">${cntApproved}</span></span>
+          ${cntAdapting ? `<span class="stat-mini">✏️ Adaptando: <span class="mono" style="color:var(--gold)">${cntAdapting}</span></span>` : ''}
+          ${cntReady ? `<span class="stat-mini">✨ Listos para tu OK: <span class="mono" style="color:var(--cyan)">${cntReady}</span></span>` : ''}
+          <span class="stat-mini">✅ Enviados: <span class="mono" style="color:var(--green-soft)">${cntSent}</span></span>
+        </div>
+        <span style="font-size:12px;">El sistema revisa cada 15 min y envía tus OKs automáticamente</span>
+      `;
+      document.getElementById('focusProgFill').style.width = `${Math.max(4, pct)}%`;
+
+      const list = state.focusBucket === 'priority' ? prioList
+        : state.focusBucket === 'queue' ? queueList
+        : state.focusBucket === 'customers' ? custList
+        : trackList;
+
+      const slot = document.getElementById('focusCardSlot');
+      if (!list.length) {
+        state.focusEmail = '';
+        slot.innerHTML = `
+          <div class="focus-card celebrate">
+            <div class="celebrate-ico">🎉</div>
+            <h2>¡Todo limpio en esta sección!</h2>
+            <p>${cntApproved > 0
+              ? `Tienes <strong>${cntApproved} correo(s) con tu OK</strong>. El sistema en tu Mac los enviará automáticamente en el horario configurado.`
+              : 'No queda ningún correo pendiente aquí. Puedes pasar a la siguiente pestaña o descansar.'}</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px;">
+              ${queueList.length && state.focusBucket !== 'queue' ? `<button type="button" class="btn-primary-ok" style="min-width:210px;min-height:46px;font-size:14.5px;" data-jump-bucket="queue">🎯 Seguir con Repesca (${queueList.length})</button>` : ''}
+              ${trackList.length && state.focusBucket !== 'track' ? `<button type="button" class="btn-calm" style="min-height:46px;" data-jump-bucket="track">📬 Ver en marcha y enviados (${trackList.length})</button>` : ''}
+            </div>
+          </div>
+        `;
+        slot.querySelectorAll('[data-jump-bucket]').forEach((b) => {
+          b.addEventListener('click', () => {
+            state.focusBucket = b.dataset.jumpBucket;
+            state.focusEmail = '';
+            renderFocusView();
+          });
+        });
+        return;
+      }
+
+      if (!list.some((c) => c.email === state.focusEmail)) {
+        state.focusEmail = list[0].email;
+      }
+      const idx = list.findIndex((c) => c.email === state.focusEmail);
+      const c = list[idx] || list[0];
+      renderContactCard(slot, c, {
+        idx,
+        total: list.length,
+        onPrev: () => { if (idx > 0) { state.focusEmail = list[idx - 1].email; renderFocusView(); } },
+        onNext: () => { if (idx < list.length - 1) { state.focusEmail = list[idx + 1].email; renderFocusView(); } },
+        onAfterDecision: (nextSuggestedEmail) => {
+          if (nextSuggestedEmail) state.focusEmail = nextSuggestedEmail;
+          renderFocusView();
+        },
+        nextEmailInList: list[idx + 1]?.email || list[idx - 1]?.email || '',
+      });
+    }
+
+    // ── Shared Ultra-Simple Visual Contact Card (used in Focus Mode & List View) ──
+    function renderContactCard(container, c, opts) {
+      const rep = effectiveReply(c);
+      const st = effectiveStatus(c);
+      const isSent = st === 'ENVIADO';
+      const em = c.email.toLowerCase();
+      const buf = DRAFTS_BUFFER[em] || null;
+      const loc = [c.city, c.country_name || c.country_code].filter(Boolean).join(', ');
+      const t = c.telemetry || {};
+      const hist = c.email_history || [];
+
+      const curSubjEs = buf ? buf.subjEs : (rep?.subject_es || '');
+      const curBodyEs = buf ? buf.bodyEs : (rep?.body_es || '');
+      const curNote = buf ? buf.corrNote : (rep?.correction_note || '');
+      const isDirty = !!buf && (
+        buf.subjEs !== (rep?.subject_es || '') ||
+        buf.bodyEs !== (rep?.body_es || '') ||
+        buf.corrNote.trim().length > 0
+      );
+
+      // Status feedback banner
+      let stateBannerHtml = '';
+      if (st === 'ENVIADO') {
+        const who = rep?.sent_by === 'PILOTO_AUTOMATICO' ? 'vía Piloto Automático' : 'con tu OK';
+        stateBannerHtml = `
+          <div class="state-banner sb-ok">
+            <span>✅ <strong>ENVIADO</strong> ${rep?.sent_at ? 'el ' + esc(rep.sent_at.replace('T', ' ').slice(0, 16)) : ''} (${who}) · Protegido contra reenvíos.</span>
+          </div>`;
+      } else if (st === 'APROBADO') {
+        stateBannerHtml = `
+          <div class="state-banner sb-ok">
+            <span>📤 <strong>Tiene tu OK.</strong> El sistema lo enviará automáticamente en la próxima revisión (cada 15 min, horario CET).</span>
+            <button type="button" class="btn-ghost btn-sm" id="undoOkBtn">↩️ Quitar OK</button>
+          </div>`;
+      } else if (st === 'CORRECCION_SOLICITADA') {
+        stateBannerHtml = `
+          <div class="state-banner sb-wait">
+            <span>✏️ <strong>Corrección guardada en la nube.</strong> Tu Mac la adaptará al ${esc(rep?.lang || 'EN')} en los próximos minutos${rep?.approve_after_adapt ? ' y la dejará con tu OK automático' : ' para que la revises'}.</span>
+          </div>`;
+      } else if (st === 'ADAPTADO_LISTO') {
+        stateBannerHtml = `
+          <div class="state-banner sb-adapt">
+            <span>✨ <strong>¡Ya adaptado al ${esc(rep?.lang || 'EN')}!</strong> ${esc(rep?.change_summary_es || 'Revisa el texto en castellano y dale OK si te gusta.')}</span>
+          </div>`;
+      } else if (st === 'BLOQUEADO_GUARDIA') {
+        const reasons = (rep?.guard_violations || []).join(' · ') || 'Posible mención interna o sin opción de baja.';
+        stateBannerHtml = `
+          <div class="state-banner sb-block">
+            <div>
+              <div>⚠️ <strong>Detenido por el escudo anti-telemetría (no se ha enviado)</strong></div>
+              <div style="font-size:12px;opacity:.92;margin-top:3px;">Motivo: ${esc(reasons)} — Corrige el texto abajo o vuelve al borrador seguro.</div>
+            </div>
+            <button type="button" class="btn-ghost btn-sm" id="revertOrigBtn">↩️ Borrador seguro</button>
+          </div>`;
+      }
+
+      const alertHtml = (c.alert && st !== 'ENVIADO') ? `
+        <div class="state-banner ${c.alert.level === 'hot' ? 'sb-block' : c.alert.level === 'purple' ? 'sb-purple' : c.alert.level === 'ok' ? 'sb-ok' : 'sb-wait'}">
+          <div>
+            <div style="font-weight:800;">${esc(c.alert.title)}</div>
+            <div style="font-size:12.5px;font-weight:500;margin-top:3px;opacity:.92;">${esc(c.alert.text)}</div>
+          </div>
+        </div>` : '';
+
+      // Reply / Spanish editable stage
+      let stageHtml = '';
+      let dirtyDockHtml = '';
+      let cleanDockHtml = '';
+      if (rep) {
+        const targetLang = String(rep.lang || 'EN').toUpperCase();
+        const isNativeEs = targetLang === 'ES';
+        const targetLangHuman = targetLang === 'FR' ? 'Francés' : targetLang === 'ES' ? 'Español' : 'Inglés';
+        const hasCustomAdaptedOrEdit = !!(rep.has_adapted || st === 'CORRECCION_SOLICITADA' || st === 'ADAPTADO_LISTO' || st === 'BLOQUEADO_GUARDIA');
+        const fullMailto = `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(rep.subject)}&body=${encodeURIComponent(rep.body)}`;
+        const isLongMailto = fullMailto.length > 1950;
+        const mailtoHref = isLongMailto ? `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(rep.subject)}` : fullMailto;
+
+        dirtyDockHtml = `
+          <div class="action-dock">
+            <button type="button" class="btn-adapt-ok" id="adaptAndOkBtn">⚡ ${isNativeEs ? 'Guardar y dar OK envío' : 'Adaptar a ' + targetLangHuman + ' y dar OK'}</button>
+            <button type="button" class="btn-adapt" id="adaptOnlyBtn">✨ ${isNativeEs ? 'Guardar para revisar' : 'Adaptar y enseñármelo'}</button>
+            <button type="button" class="btn-calm" id="discardEditBtn">↩️ Deshacer</button>
+          </div>`;
+
+        if (isSent) {
+          cleanDockHtml = `
+            <div class="action-dock">
+              <span class="pill pill-green" style="padding:10px 14px;font-size:13px;">✅ Correo ya enviado y archivado</span>
+              ${opts.idx < opts.total - 1 ? '<button type="button" class="btn-calm" id="nextAfterSentBtn">Siguiente ➡️</button>' : ''}
+            </div>`;
+        } else if (st === 'CORRECCION_SOLICITADA') {
+          cleanDockHtml = `
+            <div class="action-dock">
+              <span class="pill pill-gold" style="padding:11px 15px;font-size:13px;">⏳ Esperando adaptación automática al ${targetLangHuman}...</span>
+              <button type="button" class="btn-calm" id="checkAdaptNowBtn">🔄 Comprobar ahora</button>
+              <button type="button" class="btn-calm" id="revertOrigBtn2">↩️ Cancelar corrección</button>
+            </div>`;
+        } else if (st === 'APROBADO') {
+          cleanDockHtml = `
+            <div class="action-dock">
+              <span class="pill pill-green" style="padding:11px 15px;font-size:13.5px;">📤 En cola · El sistema lo enviará automáticamente</span>
+              <button type="button" class="btn-calm" id="undoOkBtn2">↩️ Quitar OK</button>
+              ${opts.idx < opts.total - 1 ? '<button type="button" class="btn-calm" id="nextAfterOkBtn">Siguiente ➡️</button>' : ''}
+            </div>`;
+        } else if (st === 'BLOQUEADO_GUARDIA') {
+          cleanDockHtml = `
+            <div class="action-dock">
+              <button type="button" class="btn-adapt" id="revertOrigBtn2">↩️ Volver al borrador original seguro</button>
+              <button type="button" class="btn-calm" id="pauseBtn">⏸️ Ahora no</button>
+              <button type="button" class="btn-calm danger" id="discardBtn">❌ No enviar</button>
+            </div>`;
+        } else {
+          cleanDockHtml = `
+            <div class="action-dock">
+              <button type="button" class="btn-primary-ok" id="approveBtn">✅ SÍ, DAR OK PARA ENVIAR</button>
+              <button type="button" class="btn-calm" id="pauseBtn">⏸️ Ahora no</button>
+              <button type="button" class="btn-calm danger" id="discardBtn">❌ No enviar</button>
+            </div>`;
+        }
+        const dockHtml = (!isSent && isDirty) ? dirtyDockHtml : cleanDockHtml;
+
+        stageHtml = `
+          <div class="es-stage ${isDirty ? 'dirty' : ''}" id="esStageBox">
+            <div class="es-stage-head">
+              <span class="es-stage-title">🇪🇸 ${isSent ? 'Mensaje enviado (en castellano)' : 'Caja en castellano · Lee y corrige aquí si quieres'}</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                ${langPill(targetLang)}
+                <span class="pill pill-green">🛡️ Cero telemetría</span>
+                ${hasCustomAdaptedOrEdit && !isSent ? '<button type="button" class="btn-ghost btn-sm" id="resetOrigMiniBtn" title="Volver al borrador original">↩️ Original</button>' : ''}
+              </div>
+            </div>
+
+            <div>
+              <label class="field-lbl" for="esSubjInput">Asunto (en castellano)</label>
+              <input id="esSubjInput" class="es-subj-input" type="text" value="${esc(curSubjEs)}" ${isSent ? 'readonly' : ''} />
+            </div>
+
+            <div>
+              <label class="field-lbl" for="esBodyTa">Mensaje (puedes editar directamente cualquier frase)</label>
+              <textarea id="esBodyTa" class="es-body-ta" ${isSent ? 'readonly' : ''}>${esc(curBodyEs)}</textarea>
+            </div>
+
+            ${isSent ? '' : `
+            <div class="corr-box">
+              <label class="field-lbl" for="corrNoteInput" style="color:#d4c4ff;margin-bottom:0;">💬 O escríbeme una corrección rápida (yo la adapto al ${targetLangHuman})</label>
+              <input id="corrNoteInput" class="corr-input" type="text" value="${esc(curNote)}" placeholder="Ej: hazlo más corto, quita lo de Android y dile que podemos hacer un Zoom..." />
+            </div>`}
+
+            <div id="actionDockSlot">${dockHtml}</div>
+          </div>
+
+          <div class="drawers">
+            ${isNativeEs ? '' : `
+            <details class="drawer">
+              <summary>
+                <span>🌍 Ver texto exacto en ${targetLangHuman} que se enviará</span>
+                <span class="pill pill-muted">${rep.in_reply_to ? '↩️ Mismo hilo' : '🆕 Correo nuevo'}</span>
+              </summary>
+              <div class="drawer-body">
+                <div class="orig-mail-box">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <span class="mono" style="font-size:12px;color:var(--muted);">Para: ${esc(c.email)}</span>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                      <button type="button" class="btn-ghost btn-sm" id="copySubjBtn">📋 Copiar asunto</button>
+                      <button type="button" class="btn-ghost btn-sm" id="copyBodyBtn">📋 Copiar texto</button>
+                      <a class="btn-ghost btn-sm" id="openMailBtn" href="${mailtoHref}">✉️ Abrir en Mail</a>
+                    </div>
+                  </div>
+                  <div class="mail-subj">${esc(rep.subject)}</div>
+                  <div class="mail-body">${esc(rep.body)}</div>
+                </div>
+              </div>
+            </details>`}
+
+            <details class="drawer" ${hist.length && c.cohort === 'R0_INBOUND_URGENTE_2026' ? 'open' : ''}>
+              <summary>
+                <span>💬 Conversación anterior por correo</span>
+                <span class="pill ${hist.length ? 'pill-cyan' : 'pill-muted'}">${hist.length ? hist.length + ' mensaje(s)' : 'Primer contacto'}</span>
+              </summary>
+              <div class="drawer-body">
+                ${hist.length ? `
+                  <div class="timeline">
+                    ${hist.map((m) => `
+                      <article class="msg-card ${m.dir === 'IN' ? 'in' : 'out'}">
+                        <div class="msg-head">
+                          <div>
+                            <span class="pill ${m.dir === 'IN' ? 'pill-cyan' : 'pill-purple'}">${m.dir === 'IN' ? '📥 RECIBIDO' : '📤 ENVIADO'}</span>
+                            <strong style="margin-left:6px;color:var(--text);">${esc(m.from_name || (m.dir === 'IN' ? (c.name || c.email) : 'Carlos'))}</strong>
+                          </div>
+                          <span class="mono">${esc(m.date)} UTC</span>
+                        </div>
+                        <div class="msg-subj">${esc(m.subject)}</div>
+                        <div class="msg-body">${esc(m.body_top)}</div>
+                      </article>
+                    `).join('')}
+                  </div>` : '<div style="font-size:13px;color:var(--muted);">Sin correos previos: este será el primer contacto humano 1:1.</div>'}
+              </div>
+            </details>
+
+            <details class="drawer">
+              <summary>
+                <span>🔍 Ver ficha completa (uso en la app, hardware, licencias y nota privada)</span>
+                <span class="pill pill-gold mono">ICP ${c.icp_score}/100</span>
+              </summary>
+              <div class="drawer-body">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="font-size:12px;font-weight:700;color:var(--muted);">📝 Nota privada (solo para ti):</span>
+                  <input id="internalNoteInput" class="search-input" style="flex:1;min-width:220px;" type="text" value="${esc(rep.internal_note || '')}" placeholder="Escribe una nota interna..." />
+                  <button type="button" class="btn-ghost btn-sm" id="saveNoteBtn">💾 Guardar nota</button>
+                </div>
+                <div class="ctx-grid">
+                  <div class="ctx-card">
+                    <div style="font-size:13px;font-weight:800;">🖥️ Uso de la App & Equipo</div>
+                    <div class="mini-stats">
+                      <div class="mst"><div class="mst-v mono">${fmt(t.distinct_active_days)}</div><div class="mst-l">Días</div></div>
+                      <div class="mst"><div class="mst-v mono">${t.estimated_hours || 0}h</div><div class="mst-l">Horas</div></div>
+                      <div class="mst"><div class="mst-v mono">${fmt(t.total_events)}</div><div class="mst-l">Eventos</div></div>
+                      <div class="mst"><div class="mst-v mono">${t.days_inactive !== null && t.days_inactive !== undefined ? t.days_inactive + 'd' : '—'}</div><div class="mst-l">Inact.</div></div>
+                    </div>
+                    <div class="kv-list">
+                      <div class="kv-row"><span class="kv-k">Equipo</span><span class="kv-v">${esc(t.os_detail || t.os_family || '—')} · ${t.ram_gb ? t.ram_gb + ' GB RAM' : 'RAM n/d'}</span></div>
+                      <div class="kv-row"><span class="kv-k">Audio</span><span class="kv-v">${esc((t.audio_devices || []).join(', ') || t.audio_tier || '—')}</span></div>
+                      <div class="kv-row"><span class="kv-k">Último uso</span><span class="kv-v mono">${esc(t.last_seen || '—')}</span></div>
+                      <div class="kv-row"><span class="kv-k">Atribución</span><span class="kv-v">${esc(c.attribution_channel || '—')}</span></div>
+                    </div>
+                  </div>
+                  <div class="ctx-card">
+                    <div style="font-size:13px;font-weight:800;">🎛️ Funciones & Licencias</div>
+                    <div class="feat-grid">
+                      <span class="feat-chip ${t.dmx_events > 0 ? 'on' : ''}">DMX: ${t.dmx_events || 0}</span>
+                      <span class="feat-chip ${t.ndi_events > 0 ? 'on' : ''}">NDI: ${t.ndi_events || 0}</span>
+                      <span class="feat-chip ${t.spout_events > 0 ? 'on' : ''}">Spout: ${t.spout_events || 0}</span>
+                      <span class="feat-chip ${t.artist_brand_events > 0 ? 'on' : ''}">Logo: ${t.artist_brand_events || 0}</span>
+                      <span class="feat-chip ${t.custom_media_events > 0 ? 'on' : ''}">Media: ${t.custom_media_events || 0}</span>
+                      <span class="feat-chip ${t.buy_click_events > 0 ? 'warn' : ''}">Clics comprar: ${t.buy_click_events || 0}</span>
+                      <span class="feat-chip ${t.activation_failed_events > 0 ? 'hot' : ''}">Fallos activ.: ${t.activation_failed_events || 0}</span>
+                    </div>
+                    <div style="font-size:12px;color:var(--muted);"><strong>Motivo interno (JAMÁS citado):</strong> <span class="mono">${esc(rep.why_selected_internal || '')}</span></div>
+                    ${c.revenue_usd > 0 ? `<div class="pill pill-green" style="align-self:flex-start;">💳 Pagado: ${fmtUsd(c.revenue_usd)}</div>` : ''}
+                    ${c.crm_notes ? `<div style="font-size:12px;background:rgba(46,230,214,0.07);padding:8px 10px;border-radius:9px;"><strong>Notas CRM:</strong> ${esc(c.crm_notes)}</div>` : ''}
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+        `;
+      } else {
+        stageHtml = `
+          <div class="card" style="color:var(--muted);font-size:14px;">
+            ℹ️ Este contacto no tiene borrador de correo en cola (${esc(c.eligibility)}).
+          </div>`;
+      }
+
+      container.innerHTML = `
+        <article class="focus-card">
+          ${opts.backLabel ? `<div><button type="button" class="btn-ghost btn-sm" id="backCardBtn">${esc(opts.backLabel)}</button></div>` : ''}
+          <div class="fc-top">
+            <div class="fc-person">
+              <div class="fc-name">
+                <span>${flagOf(c.country_code)}</span>
+                <span>${esc(c.name || c.email)}</span>
+                ${statusBadgeHtml(st, rep?.sent_at)}
+              </div>
+              <div class="fc-sub">
+                <span class="mono" style="color:var(--cyan);">${esc(c.email)}</span>
+                ${loc ? `<span>· ${esc(loc)}</span>` : ''}
+                ${c.revenue_usd > 0 ? `<span class="pill pill-green mono">${fmtUsd(c.revenue_usd)}</span>` : ''}
+                <button type="button" class="btn-ghost btn-sm" id="copyEmailBtn">📋</button>
+              </div>
+            </div>
+            <div class="fc-pager">
+              <button type="button" class="btn-ghost btn-sm" id="prevCardBtn" ${opts.idx <= 0 ? 'disabled' : ''}>◀</button>
+              <span class="mono" style="font-size:12.5px;color:var(--muted);padding:0 4px;">${opts.idx + 1} / ${opts.total}</span>
+              <button type="button" class="btn-ghost btn-sm" id="nextCardBtn" ${opts.idx >= opts.total - 1 ? 'disabled' : ''}>▶</button>
+            </div>
+          </div>
+
+          <div class="reason-banner">
+            <span class="pill pill-cyan">${esc(c.simple_tag || (COHORT_HUMAN[c.cohort]?.short || c.cohort))}</span>
+            <span>${esc(c.simple_reason_es || rep?.resumen_es_carlos || c.highlight)}</span>
+          </div>
+
+          ${stateBannerHtml}
+          ${alertHtml}
+          ${stageHtml}
+        </article>
+      `;
+
+      // Bind interactions
+      const q = (id) => container.querySelector('#' + id);
+      if (q('backCardBtn') && opts.onBack) q('backCardBtn').addEventListener('click', opts.onBack);
+      q('copyEmailBtn').addEventListener('click', () => copyText(c.email, 'Email'));
+      q('prevCardBtn').addEventListener('click', () => opts.onPrev && opts.onPrev());
+      q('nextCardBtn').addEventListener('click', () => opts.onNext && opts.onNext());
+      if (q('nextAfterSentBtn')) q('nextAfterSentBtn').addEventListener('click', () => opts.onNext && opts.onNext());
+
+      if (!rep) return;
+
+      if (q('copySubjBtn')) q('copySubjBtn').addEventListener('click', () => copyText(rep.subject, 'Asunto'));
+      if (q('copyBodyBtn')) q('copyBodyBtn').addEventListener('click', () => copyText(rep.body, 'Texto'));
+      if (q('openMailBtn')) {
+        const fullMailto = `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(rep.subject)}&body=${encodeURIComponent(rep.body)}`;
+        if (fullMailto.length > 1950) {
+          q('openMailBtn').addEventListener('click', () => copyText(rep.body, 'Cuerpo (pégalo en Mail con ⌘V)'));
         }
       }
-      if (state.lang !== 'ALL') {
-        list = list.filter((c) => (c.reply?.lang || c.lang) === state.lang);
-      }
-      if (state.reviewFilter !== 'ALL') {
-        list = list.filter((c) => effectiveReviewStatus(c) === state.reviewFilter);
-      }
-      if (state.search) {
-        const q = state.search.toLowerCase();
-        list = list.filter((c) => {
-          const hay = [
-            c.email, c.name, c.country_code, c.country_name, c.city, c.cohort, c.persona,
-            c.attribution_channel, c.highlight,
-            ...(c.telemetry.audio_devices || []),
-            ...(c.telemetry.dmx_devices || []),
-            ...(c.email_meta.topics || []),
-            ...(c.email_meta.competitors || []),
-            c.email_meta.last_subject || '',
-            c.crm_notes || '',
-            c.reply?.subject || '',
-            c.reply?.resumen_es_carlos || '',
-          ].join(' ').toLowerCase();
-          return hay.includes(q);
+
+      const saveInternalNote = async () => {
+        const btn = q('saveNoteBtn');
+        if (btn) btn.disabled = true;
+        const val = q('internalNoteInput')?.value || '';
+        await pushDecision(c.email, { internal_note: val, kind: rep.kind });
+        if (btn) btn.disabled = false;
+        showToast('📝 Nota interna guardada');
+      };
+      if (q('saveNoteBtn')) q('saveNoteBtn').addEventListener('click', saveInternalNote);
+
+      const handleRevertOriginal = async () => {
+        delete DRAFTS_BUFFER[em];
+        await pushDecision(c.email, { decision: 'PENDIENTE', clear_edits: true, kind: rep.kind });
+        showToast('↩️ Restaurado al borrador original');
+        renderCurrentView();
+      };
+      if (q('revertOrigBtn')) q('revertOrigBtn').addEventListener('click', handleRevertOriginal);
+      if (q('revertOrigBtn2')) q('revertOrigBtn2').addEventListener('click', handleRevertOriginal);
+      if (q('resetOrigMiniBtn')) q('resetOrigMiniBtn').addEventListener('click', handleRevertOriginal);
+
+      const handleUndoOk = async () => {
+        await pushDecision(c.email, { decision: 'PENDIENTE', kind: rep.kind });
+        showToast('↩️ OK retirado (vuelve a pendiente)');
+        renderCurrentView();
+      };
+      if (q('undoOkBtn')) q('undoOkBtn').addEventListener('click', handleUndoOk);
+      if (q('undoOkBtn2')) q('undoOkBtn2').addEventListener('click', handleUndoOk);
+      if (q('nextAfterOkBtn')) q('nextAfterOkBtn').addEventListener('click', () => opts.onNext && opts.onNext());
+      if (q('checkAdaptNowBtn')) {
+        q('checkAdaptNowBtn').addEventListener('click', async () => {
+          await pullCloudState(false);
+          showToast('☁️ Comprobado');
         });
+      }
+
+      if (isSent) return;
+
+      // Track live edits in Spanish box & swap action dock smoothly without losing focus!
+      const subjEl = q('esSubjInput');
+      const bodyEl = q('esBodyTa');
+      const noteEl = q('corrNoteInput');
+      const stageEl = q('esStageBox');
+      const dockEl = q('actionDockSlot');
+      const targetLang = String(rep.lang || 'EN').toUpperCase();
+      const isNativeEs = targetLang === 'ES';
+      const targetLangHuman = targetLang === 'FR' ? 'Francés' : targetLang === 'ES' ? 'Español' : 'Inglés';
+
+      const bindDockButtons = () => {
+        const lockDock = () => dockEl.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+        if (q('approveBtn')) {
+          q('approveBtn').addEventListener('click', async () => {
+            lockDock();
+            await pushDecision(c.email, { decision: 'APROBADO', kind: rep.kind });
+            showToast('✅ ¡OK guardado! El sistema lo enviará automáticamente');
+            opts.onAfterDecision && opts.onAfterDecision(opts.nextEmailInList);
+          });
+        }
+        if (q('pauseBtn')) {
+          q('pauseBtn').addEventListener('click', async () => {
+            lockDock();
+            await pushDecision(c.email, { decision: 'PAUSADO', kind: rep.kind });
+            showToast('⏸️ Guardado para más tarde');
+            opts.onAfterDecision && opts.onAfterDecision(opts.nextEmailInList);
+          });
+        }
+        if (q('discardBtn')) {
+          q('discardBtn').addEventListener('click', async () => {
+            lockDock();
+            await pushDecision(c.email, { decision: 'DESCARTADO', kind: rep.kind });
+            showToast('❌ Descartado (no se enviará)');
+            opts.onAfterDecision && opts.onAfterDecision(opts.nextEmailInList);
+          });
+        }
+        if (q('adaptOnlyBtn')) {
+          q('adaptOnlyBtn').addEventListener('click', async () => {
+            lockDock();
+            const sVal = subjEl.value.trim();
+            const bVal = bodyEl.value.trim();
+            const nVal = noteEl ? noteEl.value.trim() : '';
+            await pushDecision(c.email, {
+              decision: 'CORRECCION_SOLICITADA',
+              edited_subject_es: sVal,
+              edited_body_es: bVal,
+              correction_note: nVal,
+              approve_after_adapt: false,
+              kind: rep.kind,
+            });
+            showToast(`✨ Corrección guardada · Tu Mac la adaptará al ${targetLangHuman} para que la valides`);
+            opts.onAfterDecision && opts.onAfterDecision(opts.nextEmailInList);
+          });
+        }
+        if (q('adaptAndOkBtn')) {
+          q('adaptAndOkBtn').addEventListener('click', async () => {
+            lockDock();
+            const sVal = subjEl.value.trim();
+            const bVal = bodyEl.value.trim();
+            const nVal = noteEl ? noteEl.value.trim() : '';
+            await pushDecision(c.email, {
+              decision: 'CORRECCION_SOLICITADA',
+              edited_subject_es: sVal,
+              edited_body_es: bVal,
+              correction_note: nVal,
+              approve_after_adapt: true,
+              kind: rep.kind,
+            });
+            showToast(`⚡ Guardado · Tu Mac lo adaptará al ${targetLangHuman}, pasará el escudo y lo enviará`);
+            opts.onAfterDecision && opts.onAfterDecision(opts.nextEmailInList);
+          });
+        }
+        if (q('discardEditBtn')) {
+          q('discardEditBtn').addEventListener('click', () => {
+            delete DRAFTS_BUFFER[em];
+            renderCurrentView();
+            showToast('↩️ Cambios descartados');
+          });
+        }
+      };
+
+      const onEditInput = () => {
+        const sVal = subjEl.value;
+        const bVal = bodyEl.value;
+        const nVal = noteEl ? noteEl.value : '';
+        const nowDirty = (sVal !== (rep.subject_es || '')) || (bVal !== (rep.body_es || '')) || (nVal.trim().length > 0);
+        if (nowDirty) DRAFTS_BUFFER[em] = { subjEs: sVal, bodyEs: bVal, corrNote: nVal };
+        else delete DRAFTS_BUFFER[em];
+
+        const wasDirty = stageEl.classList.contains('dirty');
+        if (nowDirty !== wasDirty) {
+          stageEl.classList.toggle('dirty', nowDirty);
+          dockEl.innerHTML = nowDirty ? dirtyDockHtml : cleanDockHtml;
+          bindDockButtons();
+          if (q('undoOkBtn2')) q('undoOkBtn2').addEventListener('click', handleUndoOk);
+          if (q('revertOrigBtn2')) q('revertOrigBtn2').addEventListener('click', handleRevertOriginal);
+          if (q('nextAfterOkBtn')) q('nextAfterOkBtn').addEventListener('click', () => opts.onNext && opts.onNext());
+          if (q('checkAdaptNowBtn')) {
+            q('checkAdaptNowBtn').addEventListener('click', async () => {
+              await pullCloudState(false);
+              showToast('☁️ Comprobado');
+            });
+          }
+        }
+      };
+
+      subjEl.addEventListener('input', onEditInput);
+      bodyEl.addEventListener('input', onEditInput);
+      if (noteEl) noteEl.addEventListener('input', onEditInput);
+      bindDockButtons();
+    }
+
+    // ── View 2: Classic Master-Detail List ──────────────────────────────────
+    function getBaseListForSubTab(tab) {
+      const all = DATA?.contacts || [];
+      if (tab === 'queue') return all.filter((c) => c.in_queue).sort((a, b) => (a.queue_rank || 999) - (b.queue_rank || 999));
+      if (tab === 'customers') return all.filter((c) => c.is_customer).sort((a, b) => (a.customer_priority_rank ?? 9) - (b.customer_priority_rank ?? 9) || (b.revenue_usd - a.revenue_usd));
+      return all.filter((c) => !!c.is_traktor_tab).sort((a, b) => (b.email_meta.last_date || '').localeCompare(a.email_meta.last_date || ''));
+    }
+
+    function getFilteredListView() {
+      let list = getBaseListForSubTab(state.listTab);
+      if (state.listSubFilter !== 'ALL') {
+        if (state.listTab === 'queue') list = list.filter((c) => c.cohort === state.listSubFilter);
+        else if (state.listTab === 'customers') {
+          if (state.listSubFilter === 'STRIPE') list = list.filter((c) => c.license_category === 'COMPRADOR_STRIPE');
+          else if (state.listSubFilter === 'URGENT') list = list.filter((c) => c.is_priority_today);
+        }
+      }
+      if (state.listLang !== 'ALL') list = list.filter((c) => (c.reply?.lang || c.lang) === state.listLang);
+      if (state.listState !== 'ALL') list = list.filter((c) => effectiveStatus(c) === state.listState);
+      if (state.listSearch) {
+        const q = state.listSearch.toLowerCase();
+        list = list.filter((c) => [c.email, c.name, c.country_name, c.city, c.simple_tag, c.simple_reason_es, c.highlight].join(' ').toLowerCase().includes(q));
       }
       return list;
     }
 
-    function renderMainTabs() {
+    function renderListView() {
       const qs = DATA.queue_summary;
-      const trCount = getBaseListForTab('traktor').length;
-      const tabs = [
-        { id: 'queue', label: '🎯 Cola Repesca', cnt: qs.total },
-        { id: 'customers', label: '💎 Clientes', cnt: qs.customers_count },
-        { id: 'traktor', label: '🎛️ Otro producto', cnt: trCount },
-        { id: 'icp', label: '📊 ICP & Funnel', cnt: null },
-        { id: 'all', label: '🗂️ Todos', cnt: DATA.contacts.length },
-      ];
-      document.getElementById('mainTabs').innerHTML = tabs.map((t) => `
-        <button class="${state.tab === t.id ? 'active' : ''}" data-tab="${t.id}">
-          <span>${t.label}</span>
-          ${t.cnt !== null ? `<span class="seg-cnt mono">${t.cnt}</span>` : ''}
-        </button>
-      `).join('');
+      const trCnt = getBaseListForSubTab('traktor').length;
+      document.getElementById('listSubTabs').innerHTML = [
+        { id: 'queue', label: `🎯 Cola Repesca (${qs.total})` },
+        { id: 'customers', label: `💎 Clientes (${qs.customers_count})` },
+        { id: 'traktor', label: `🎛️ Otro producto (${trCnt})` },
+      ].map((t) => `<button type="button" class="${state.listTab === t.id ? 'active' : ''}" data-ltab="${t.id}">${t.label}</button>`).join('');
+
+      const base = getBaseListForSubTab(state.listTab);
+      let chips = [{ id: 'ALL', lbl: `Todos (${base.length})` }];
+      if (state.listTab === 'queue') {
+        const cnt = (k) => base.filter((c) => c.cohort === k).length;
+        for (const [cid, lbl] of [
+          ['R0_INBOUND_URGENTE_2026', '🔥 R0 Hoy'],
+          ['R0_INBOUND_SEGUIMIENTO_2026', '💬 Hilo'],
+          ['R1_INTENCION_COMPRA_FRICCION', '💳 R1'],
+          ['R4_DMX_NDI_PANTALLA_PRO', '🎛️ R4'],
+          ['R2_POWER_USER_ABANDONADO', '⚡ R2'],
+          ['R3_HARDWARE_PRO_ACTIVACION', '🎧 R3'],
+          ['R6_TRIAL_RECIENTE_ACTIVO', '🌱 R6'],
+        ]) {
+          const n = cnt(cid);
+          if (n > 0) chips.push({ id: cid, lbl: `${lbl} (${n})` });
+        }
+      } else if (state.listTab === 'customers') {
+        chips.push({ id: 'URGENT', lbl: `🔥 Prioritarios (${base.filter((c) => c.is_priority_today).length})` });
+        chips.push({ id: 'STRIPE', lbl: `💳 Stripe (${base.filter((c) => c.license_category === 'COMPRADOR_STRIPE').length})` });
+      }
+      document.getElementById('listChips').innerHTML = chips.map((ch) =>
+        `<button type="button" class="chip ${state.listSubFilter === ch.id ? 'active' : ''}" data-lchip="${esc(ch.id)}">${esc(ch.lbl)}</button>`
+      ).join('');
+
+      const list = getFilteredListView();
+      document.getElementById('listCountLbl').textContent = `${list.length} contacto(s)`;
+      const listEl = document.getElementById('leadList');
+      const detEl = document.getElementById('listDetailSlot');
+      if (!list.length) {
+        listEl.innerHTML = '<div style="padding:18px;color:var(--muted);font-size:13px;">Sin resultados con este filtro.</div>';
+        detEl.innerHTML = '<div class="card" style="color:var(--muted);">Cambia el filtro para ver contactos.</div>';
+        return;
+      }
+      if (!list.some((c) => c.email === state.listSelectedEmail)) state.listSelectedEmail = list[0].email;
+
+      listEl.innerHTML = list.map((c) => {
+        const st = effectiveStatus(c);
+        const rep = effectiveReply(c);
+        const active = c.email === state.listSelectedEmail ? 'active' : '';
+        return `
+          <button type="button" class="lead-item ${active}" data-lemail="${esc(c.email)}">
+            <div class="li-top">
+              <div class="li-name">${flagOf(c.country_code)} ${esc(c.name || c.email)}</div>
+              <span class="mono" style="font-size:11px;color:var(--cyan);font-weight:700">${esc(c.reply?.lang || c.lang)}</span>
+            </div>
+            <div class="li-email mono">${esc(c.email)}</div>
+            <div class="li-tags">
+              ${statusBadgeHtml(st, rep?.sent_at)}
+              <span class="pill pill-muted">${esc(c.simple_tag || (COHORT_HUMAN[c.cohort]?.short || c.cohort))}</span>
+            </div>
+          </button>`;
+      }).join('');
+
+      const idx = list.findIndex((c) => c.email === state.listSelectedEmail);
+      const sel = list[idx] || list[0];
+      renderContactCard(detEl, sel, {
+        idx,
+        total: list.length,
+        onPrev: () => { if (idx > 0) { state.listSelectedEmail = list[idx - 1].email; renderListView(); } },
+        onNext: () => { if (idx < list.length - 1) { state.listSelectedEmail = list[idx + 1].email; renderListView(); } },
+        onAfterDecision: () => renderListView(),
+        nextEmailInList: list[idx + 1]?.email || sel.email,
+      });
     }
 
-    function renderKPIs() {
+    // ── View 3: Summary, Charts, Playbooks & Directory ──────────────────────
+    function renderSummaryView() {
       const hl = DATA.headline;
       const qs = DATA.queue_summary;
-      const sentEmailSet = new Set((DATA.contacts || []).filter(isReplySent).map((c) => c.email.toLowerCase()));
-      const revs = Object.entries(REVIEW).filter(([em]) => !sentEmailSet.has(em.toLowerCase())).map(([, r]) => r);
-      const nApr = revs.filter((r) => r.status === 'APROBADO').length;
-      const nPau = revs.filter((r) => r.status === 'PAUSADO').length;
-      const nDes = revs.filter((r) => r.status === 'DESCARTADO').length;
-      const r0u = qs.by_cohort?.R0_INBOUND_URGENTE_2026 || 0;
-      const r0uPending = qs.r0_urgent_pending ?? r0u;
-      const sentCnt = qs.sent_count || 0;
-      const r0s = qs.by_cohort?.R0_INBOUND_SEGUIMIENTO_2026 || 0;
-      const urgCust = qs.urgent_customers_count ?? (DATA.contacts || []).filter((c) => c.is_customer && c.reply?.priority_tag === 'ACCION_URGENTE_CLIENTE').length;
-      const urgTotal = r0uPending + urgCust;
-      const sbPro = Number(DATA.cohorts_comparison?.stripe_buyers?.pro_audio_pct || 0);
-      const nbPro = Number(DATA.cohorts_comparison?.all_app_non_buyers?.pro_audio_pct || 0);
-      const multStr = nbPro > 0 ? (sbPro / nbPro).toFixed(1).replace('.', ',') + '×' : '—';
-      const medDays = hl.median_days_to_buy_stripe ?? '—';
+      const allReplyable = (DATA.contacts || []).filter((c) => !!c.reply && !c.is_traktor_tab);
+      const nApr = allReplyable.filter((c) => effectiveStatus(c) === 'APROBADO').length;
+      const nSent = allReplyable.filter((c) => effectiveStatus(c) === 'ENVIADO').length;
+      const nCorr = allReplyable.filter((c) => ['CORRECCION_SOLICITADA', 'ADAPTADO_LISTO'].includes(effectiveStatus(c))).length;
 
-      const cards = [
-        {
-          lbl: 'Cola Repesca Activa',
-          val: fmt(qs.total),
-          badge: sentCnt ? `${sentCnt} enviado(s) · ${qs.pass_guard_count}/${qs.total} OK` : `${qs.pass_guard_count}/${qs.total} Stealth OK`,
-          cls: sentCnt ? 'pill-green' : 'pill-cyan',
-          sub: `${r0uPending} R0 pend. · ${r0s} hilos 2026 · ${qs.en_count} EN / ${qs.es_count} ES`,
-        },
-        {
-          lbl: 'Clientes & Ingresos',
-          val: fmtUsd(hl.stripe_revenue_usd),
-          badge: `${hl.stripe_paid_buyers} Stripe · ${hl.total_full_license_holders} Full`,
-          cls: 'pill-green',
-          sub: `${fmtUsd(hl.stripe_one_time_revenue_usd)} único (${hl.stripe_one_time_buyers}) + ${fmtUsd(hl.stripe_subscription_arr_usd)}/año (${hl.stripe_subscription_buyers})`,
-        },
-        {
-          lbl: `Urgentes Hoy (${urgTotal})`,
-          val: `${r0uPending} + ${urgCust}`,
-          badge: esc(qs.urgent_badge || 'Prioridad hoy'),
-          cls: 'pill-red',
-          sub: esc(qs.urgent_sub || 'Revisión prioritaria'),
-        },
-        {
-          lbl: 'Multiplicador ICP #1',
-          val: multStr,
-          badge: 'HW Pro / Interfaz',
-          cls: 'pill-gold',
-          sub: `${sbPro.toFixed(1).replace('.', ',')}% compradores vs ${nbPro.toFixed(1).replace('.', ',')}% no-compradores · mediana ${medDays}d`,
-        },
-        {
-          lbl: 'Tu Revisión Local',
-          val: `${nApr} ✅`,
-          badge: `${nPau} ⏸ · ${nDes} ❌`,
-          cls: nApr ? 'pill-green' : 'pill-muted',
-          sub: 'Guardado en este navegador · listo para exportar',
-        },
-      ];
-      document.getElementById('kpiGrid').innerHTML = cards.map((k) => `
+      document.getElementById('kpiGrid').innerHTML = [
+        { lbl: 'Ingresos Stripe', val: fmtUsd(hl.stripe_revenue_usd), badge: `${hl.stripe_paid_buyers} Stripe · ${hl.total_full_license_holders} Full`, cls: 'pill-green', sub: `${hl.stripe_one_time_buyers} pago único + ${hl.stripe_subscription_buyers} Pro anuales` },
+        { lbl: 'Cola Repesca', val: fmt(qs.total), badge: `${qs.pass_guard_count}/${qs.total} Cero telemetría`, cls: 'pill-cyan', sub: `${qs.en_count} EN · ${qs.es_count} ES` },
+        { lbl: 'Tu Progreso', val: `${nSent} enviados`, badge: `${nApr} con OK · ${nCorr} correcc.`, cls: nApr ? 'pill-green' : 'pill-muted', sub: 'Sincronizado en la nube en tiempo real' },
+        { lbl: 'Mediana a Compra', val: `${hl.median_days_to_buy_stripe} días`, badge: 'Cola larga real', cls: 'pill-gold', sub: '20% compró entre el día 54 y el día 72' },
+      ].map((k) => `
         <div class="card">
           <div class="kpi-label">${k.lbl}</div>
           <div class="kpi-val mono">${k.val}</div>
           <div class="kpi-foot"><span class="pill ${k.cls}">${k.badge}</span><span>${k.sub}</span></div>
-        </div>
-      `).join('');
-    }
+        </div>`).join('');
 
-    function renderCohortChips() {
-      const base = getBaseListForTab(state.tab);
-      let chips = [];
-      if (state.tab === 'queue') {
-        const cnt = (k) => base.filter((c) => c.cohort === k).length;
-        chips = [
-          { id: 'ALL', lbl: `Todos (${base.length})` },
-          { id: 'R0_INBOUND_URGENTE_2026', lbl: `🔥 R0 Hoy (${cnt('R0_INBOUND_URGENTE_2026')})` },
-          { id: 'R0_INBOUND_SEGUIMIENTO_2026', lbl: `💬 R0 Hilo (${cnt('R0_INBOUND_SEGUIMIENTO_2026')})` },
-          { id: 'R1_INTENCION_COMPRA_FRICCION', lbl: `💳 R1 (${cnt('R1_INTENCION_COMPRA_FRICCION')})` },
-          { id: 'R4_DMX_NDI_PANTALLA_PRO', lbl: `🎛️ R4 (${cnt('R4_DMX_NDI_PANTALLA_PRO')})` },
-          { id: 'R2_POWER_USER_ABANDONADO', lbl: `⚡ R2 (${cnt('R2_POWER_USER_ABANDONADO')})` },
-          { id: 'R3_HARDWARE_PRO_ACTIVACION', lbl: `🎧 R3 (${cnt('R3_HARDWARE_PRO_ACTIVACION')})` },
-          { id: 'R6_TRIAL_RECIENTE_ACTIVO', lbl: `🌱 R6 (${cnt('R6_TRIAL_RECIENTE_ACTIVO')})` },
-          { id: 'R5_PERSONALIZADOR_VISUAL', lbl: `🎨 R5 (${cnt('R5_PERSONALIZADOR_VISUAL')})` },
-        ].filter((x) => x.id === 'ALL' || !x.lbl.endsWith('(0)'));
-      } else if (state.tab === 'customers') {
-        chips = [
-          { id: 'ALL', lbl: `Todos (${base.length})` },
-          { id: 'URGENT', lbl: `🔥 Prioritarios (${base.filter((c) => ['ACCION_URGENTE_CLIENTE','BIENVENIDA_NUEVO_COMPRADOR','JOYA_B2B_CASO_ESTUDIO'].includes(c.reply?.priority_tag)).length})` },
-          { id: 'STRIPE', lbl: `💳 Stripe (${base.filter((c) => c.license_category === 'COMPRADOR_STRIPE').length})` },
-          { id: 'NON_STRIPE', lbl: `🎁 Full sin Stripe (${base.filter((c) => c.license_category !== 'COMPRADOR_STRIPE').length})` },
-          { id: 'ACTIVE', lbl: `🟢 Activos ≤14d` },
-          { id: 'INACTIVE', lbl: `🔴 Inactivos >45d` },
-        ];
-      } else if (state.tab === 'traktor') {
-        const legLbl = DATA.queue_summary?.product_legacy_label || 'Legacy';
-        chips = [
-          { id: 'ALL', lbl: `Todos (${base.length})` },
-          { id: 'TRAKTOR_2026', lbl: `🎛️ ${legLbl} 2026 (${base.filter((c) => c.product_line === 'DJMIRROR_TRAKTOR_LEGACY' && (c.email_meta.last_date || '') >= '2026-01-01').length})` },
-          { id: 'TRAKTOR_2025', lbl: `📦 ${legLbl} 2025 (${base.filter((c) => c.product_line === 'DJMIRROR_TRAKTOR_LEGACY' && (c.email_meta.last_date || '') < '2026-01-01').length})` },
-          { id: 'COLLABS', lbl: `🤝 Otros (${base.filter((c) => c.product_line !== 'DJMIRROR_TRAKTOR_LEGACY').length})` },
-        ];
-      }
-      document.getElementById('cohortChips').innerHTML = chips.map((ch) => `
-        <button class="chip ${state.subFilter === ch.id ? 'active' : ''}" data-sub="${esc(ch.id)}">${esc(ch.lbl)}</button>
-      `).join('');
-    }
-
-    function reviewBadge(status) {
-      if (status === 'APROBADO') return '<span class="pill pill-green">✅ Aprobado</span>';
-      if (status === 'PAUSADO') return '<span class="pill pill-gold">⏸ Pausado</span>';
-      if (status === 'DESCARTADO') return '<span class="pill pill-red">❌ Descartado</span>';
-      return '';
-    }
-
-    function deliveryBadge(rep) {
-      if (!rep) return '';
-      if (rep.delivery_state === 'ENVIADO' || rep.aprobacion_carlos === 'ENVIADO') {
-        const ts = rep.sent_at ? ' · ' + rep.sent_at.replace('T', ' ').slice(5, 16) : '';
-        return `<span class="pill pill-green">✅ ENVIADO${esc(ts)}</span>`;
-      }
-      if (rep.delivery_state === 'BORRADOR_IMAP_CREADO') {
-        return '<span class="pill pill-blue">📝 Borrador IMAP</span>';
-      }
-      return '';
-    }
-
-    function renderListAndDetail() {
-      const list = getFilteredList();
-      document.getElementById('listCountLbl').textContent = `${list.length} contacto(s)`;
-
-      // Ensure a valid selection
-      if (!list.length) {
-        state.selectedEmail = '';
-        document.getElementById('leadList').innerHTML = `<div style="padding:18px;color:var(--muted);font-size:13px">Sin contactos que coincidan con este filtro.</div>`;
-        document.getElementById('detailPane').innerHTML = `<div class="card" style="color:var(--muted);font-size:14px">Selecciona otro filtro o borra la búsqueda para inspeccionar contactos.</div>`;
-        return;
-      }
-      if (!list.some((c) => c.email === state.selectedEmail)) {
-        state.selectedEmail = list[0].email;
-      }
-
-      document.getElementById('leadList').innerHTML = list.map((c) => {
-        const cm = COHORT_META[c.cohort] || { short: c.cohort, cls: 'pill-muted' };
-        const rev = getReview(c.email);
-        const rLang = c.reply?.lang || c.lang || 'EN';
-        const rankStr = c.queue_rank ? `#${c.queue_rank} ` : '';
-        const msgCnt = (c.email_history || []).length;
-        const active = c.email === state.selectedEmail ? 'active' : '';
-        return `
-          <button class="lead-item ${active}" data-email="${esc(c.email)}" type="button">
-            <div class="li-top">
-              <div class="li-name">${esc(rankStr)}${esc(c.name || c.email)}</div>
-              <span class="mono" style="font-size:11px;color:var(--cyan);font-weight:700">${flagOf(c.country_code)} ${esc(rLang)} · ${c.icp_score}</span>
-            </div>
-            <div class="li-email mono">${esc(c.email)}</div>
-            <div class="li-hl">${esc(c.highlight)}</div>
-            <div class="li-tags">
-              <span class="pill ${cm.cls}">${cm.short}</span>
-              ${msgCnt ? `<span class="pill pill-muted">💬 ${msgCnt}</span>` : ''}
-              ${deliveryBadge(c.reply)}
-              ${isReplySent(c) ? '' : reviewBadge(rev.status)}
-            </div>
-          </button>
-        `;
-      }).join('');
-
-      const sel = list.find((c) => c.email === state.selectedEmail) || list[0];
-      const idx = list.findIndex((c) => c.email === sel.email);
-      renderDetail(sel, idx, list.length);
-    }
-
-    function renderDetail(c, idx, total, targetId = 'detailPane', fromDirectory = false) {
-      const pane = document.getElementById(targetId);
-      const t = c.telemetry;
-      const rev = getReview(c.email);
-      const cm = COHORT_META[c.cohort] || { short: c.cohort, cls: 'pill-muted' };
-      const prodPrimary = DATA.queue_summary?.product_primary_label || 'Producto Principal';
-      const prodLegacy = DATA.queue_summary?.product_legacy_label || 'Legacy';
-      const prodPill = c.product_line === 'DJMIRROR_TRAKTOR_LEGACY'
-        ? `<span class="pill pill-purple">🎛️ ${esc(prodLegacy)} (Otro producto)</span>`
-        : `<span class="pill pill-cyan">⚡ ${esc(prodPrimary)}</span>`;
-      const locStr = [c.city, c.country_name || c.country_code].filter(Boolean).join(', ') || 'Ubicación desconocida';
-      const rep = c.reply;
-      const contactIsSent = isReplySent(c);
-
-      // 1. Alert banner if present
-      const alertHtml = c.alert ? `
-        <div class="alert-box alert-${esc(c.alert.level)}">
-          <div class="alert-title">${esc(c.alert.title)}</div>
-          <div>${esc(c.alert.text)}</div>
-        </div>
-      ` : '';
-
-      // 2. Hero Reply + Castilian Spanish Translation card
-      let replyHtml = '';
-      let isLongMailto = false;
-      if (rep) {
-        const isAlreadyEs = rep.lang === 'ES';
-        const isSent = rep.delivery_state === 'ENVIADO' || rep.aprobacion_carlos === 'ENVIADO';
-        const kindBadge = rep.kind === 'REPESCA_PULSE'
-          ? '<span class="pill pill-cyan">🎯 REPESCA (STEALTH)</span>'
-          : rep.kind === 'RETENCION_CLIENTE'
-            ? '<span class="pill pill-green">💎 RETENCIÓN / SOPORTE CLIENTE</span>'
-            : '<span class="pill pill-purple">🎛️ BORRADOR OPCIONAL (OTRO PRODUCTO)</span>';
-        const guardBadge = rep.stealth_guard === 'PASS_ZERO_TELEMETRIA'
-          ? '<span class="pill pill-green">🛡️ PASS CERO TELEMETRÍA</span>'
-          : `<span class="pill pill-purple">ℹ️ ${esc(rep.stealth_guard)}</span>`;
-        const fullMailto = `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(rep.subject)}&body=${encodeURIComponent(rep.body)}`;
-        isLongMailto = fullMailto.length > 1950;
-        const mailtoHref = isLongMailto
-          ? `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(rep.subject)}`
-          : fullMailto;
-        const wlHtml = (rep.whitelisted_terms || []).length
-          ? rep.whitelisted_terms.map((w) => `<span class="pill pill-cyan">${esc(w)}</span>`).join(' ')
-          : '<span class="pill pill-muted">Ninguno (100% stealth · sin referencias a telemetría ni hardware)</span>';
-        const heroHeading = isSent
-          ? '✅ Correo ya enviado + 🇪🇸 Traducción al castellano'
-          : '📨 Qué vamos a responder + 🇪🇸 Traducción al castellano';
-        const leftPaneTitle = isSent
-          ? `✅ Correo ya enviado · Idioma: ${esc(rep.lang)} ${isAlreadyEs ? '(En castellano)' : ''}`
-          : `✉️ Correo exacto a enviar · Idioma: ${esc(rep.lang)} ${isAlreadyEs ? '(Ya en castellano)' : ''}`;
-        const esPaneBadge = isSent
-          ? `<span class="pill pill-green">Traducción fiel del enviado (${esc(rep.lang)})</span>`
-          : `<span class="pill pill-gold">Traducido de ${esc(rep.lang)}</span>`;
-
-        replyHtml = `
-          <section class="reply-hero">
-            <div class="reply-hero-top">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span style="font-size:15px;font-weight:800;">${heroHeading}</span>
-                ${deliveryBadge(rep)}
-                ${kindBadge}
-                ${guardBadge}
-              </div>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button class="btn-ghost btn-sm" type="button" id="copySubjBtn">📋 Copiar asunto</button>
-                <button class="btn-ghost btn-sm" type="button" id="copyBodyBtn">📋 Copiar texto</button>
-                <a class="btn-ghost btn-sm" id="openMailBtn" href="${mailtoHref}" ${isLongMailto ? 'title="Texto largo: al abrir Mail se copiará automáticamente el cuerpo al portapapeles para pegarlo con ⌘V"' : ''}>✉️ Abrir en Mail${isLongMailto ? ' (+ copiar texto)' : ''}</a>
-              </div>
-            </div>
-
-            <div class="reply-cols ${isAlreadyEs ? 'single-col' : ''}">
-              <div class="mail-pane ${isAlreadyEs ? 'es-pane' : ''}">
-                <div class="mail-pane-head">
-                  <span class="mail-pane-title" style="color:${isAlreadyEs ? 'var(--gold)' : isSent ? 'var(--green)' : 'var(--cyan)'};">${leftPaneTitle}</span>
-                  <span class="mono" style="font-size:11px;color:var(--muted);">${rep.in_reply_to ? '↩️ En el mismo hilo' : '🆕 Correo nuevo'}</span>
-                </div>
-                <div style="font-size:11.5px;color:var(--muted);"><strong>Para:</strong> <span class="mono">${esc(c.email)}</span></div>
-                <div class="mail-subj"><strong>Asunto:</strong> ${esc(rep.subject)}</div>
-                <div class="mail-body">${esc(rep.body)}</div>
-              </div>
-              ${isAlreadyEs ? '' : `
-              <div class="mail-pane es-pane">
-                <div class="mail-pane-head">
-                  <span class="mail-pane-title" style="color:var(--gold);">🇪🇸 Traducción completa al castellano</span>
-                  ${esPaneBadge}
-                </div>
-                <div style="font-size:11.5px;color:var(--muted);"><strong>Lectura íntegra para revisión</strong></div>
-                <div class="mail-subj"><strong>Asunto (ES):</strong> ${esc(rep.subject_es || rep.subject)}</div>
-                <div class="mail-body">${esc(rep.body_es || rep.body)}</div>
-              </div>
-              `}
-            </div>
-
-            <div class="strategy-strip">
-              <div><strong>💡 Resumen estratégico:</strong> ${esc(rep.resumen_es_carlos)}</div>
-              <div><strong>🔒 Por qué lo elegimos (INTERNO — JAMÁS mencionado en el correo):</strong> <span class="mono" style="font-size:11.5px;color:var(--muted)">${esc(rep.why_selected_internal)}</span></div>
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><strong>🏷️ Términos del hilo autorizados:</strong> ${wlHtml}</div>
-            </div>
-          </section>
-        `;
-      } else {
-        replyHtml = `
-          <section class="card" style="border-color:rgba(147,160,194,0.22);">
-            <div style="font-size:14px;font-weight:800;margin-bottom:6px;">ℹ️ Sin respuesta automática en cola</div>
-            <div style="font-size:13px;color:var(--muted);">
-              Estado de elegibilidad: <span class="mono">${esc(c.eligibility)}</span> · Ángulo: ${esc(c.stealth_angle)}
-            </div>
-          </section>
-        `;
-      }
-
-      // 3. Hardware & App Telemetry Card
-      const audioCls = t.audio_tier === 'PRO_DJ_OR_INTERFACE' ? 'pill-gold'
-        : t.audio_tier === 'VIRTUAL_OR_STREAMING' ? 'pill-cyan'
-        : t.audio_tier === 'BASIC_MIC_ONLY' ? 'pill-red' : 'pill-muted';
-      const audioDevsHtml = (t.audio_devices || []).length
-        ? t.audio_devices.map((d) => `<span class="pill pill-gold">${esc(d)}</span>`).join(' ')
-        : '<span style="color:var(--muted);font-size:12px">Ningún dispositivo de audio registrado</span>';
-
-      // 4. Features Pills
-      const featItems = [
-        { lbl: `DMX: ${t.dmx_events}`, on: t.dmx_events > 0, cls: 'on' },
-        { lbl: `Láseres armados: ${t.dmx_lasers_armed}`, on: t.dmx_lasers_armed > 0, cls: 'hot' },
-        { lbl: `NDI: ${t.ndi_events}`, on: t.ndi_events > 0, cls: 'on' },
-        { lbl: `Spout: ${t.spout_events}`, on: t.spout_events > 0, cls: 'on' },
-        { lbl: `2ª Pantalla: ${t.separate_window_events}`, on: t.separate_window_events > 0, cls: 'on' },
-        { lbl: `Logo/Marca: ${t.artist_brand_events}`, on: t.artist_brand_events > 0, cls: 'on' },
-        { lbl: `Media propia: ${t.custom_media_events}`, on: t.custom_media_events > 0, cls: 'on' },
-        { lbl: `Avatares: ${t.avatar_events}`, on: t.avatar_events > 0, cls: 'on' },
-        { lbl: `MIDI/OSC: ${t.midi_osc_events}`, on: t.midi_osc_events > 0, cls: 'on' },
-        { lbl: `MCP/IA: ${t.mcp_events}`, on: t.mcp_events > 0, cls: 'hot' },
-        { lbl: `Estilos: ${t.styles_used_count}`, on: t.styles_used_count >= 5, cls: 'on' },
-        { lbl: `Estilos propios: ${t.custom_styles_count}`, on: t.custom_styles_count > 0, cls: 'on' },
-        { lbl: `Clics Comprar: ${t.buy_click_events}`, on: t.buy_click_events > 0, cls: 'warn' },
-        { lbl: `Checkouts ab.: ${t.abandoned_stripe_sessions}`, on: t.abandoned_stripe_sessions > 0, cls: 'warn' },
-        { lbl: `Fallos activ.: ${t.activation_failed_events}`, on: t.activation_failed_events > 0, cls: 'hot' },
-        { lbl: `Trial caducado: ${t.trial_expired_events}`, on: t.trial_expired_events > 0, cls: 'warn' },
-      ];
-
-      // 5. Billing, Keys, Key Requests, CRM Notes & MailPoet
-      const keys = c.billing_and_keys?.keys || [];
-      const keyReqs = c.billing_and_keys?.key_requests || [];
-      const payments = c.billing_and_keys?.payments || [];
-      const mp = c.mailpoet || {};
-      const keysHtml = keys.length ? `
-        <div class="table-wrap" style="margin-top:6px;">
-          <table>
-            <thead><tr><th>#Key</th><th>Fecha</th><th>Tipo / Ed.</th><th>Estado</th><th>Emitida por</th><th>Máquina</th></tr></thead>
-            <tbody>
-              ${keys.map((k) => `
-                <tr>
-                  <td class="mono">#${esc(k.id)}</td>
-                  <td class="mono">${esc(k.created_at)}</td>
-                  <td>${esc(k.license_type)} · ${esc(k.edition)}</td>
-                  <td><span class="pill ${k.status === 'active' ? 'pill-green' : 'pill-muted'}">${esc(k.status)}</span></td>
-                  <td class="mono">${esc(k.issued_by)}</td>
-                  <td class="mono">${esc(k.machine_short)}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      ` : `<div style="font-size:12px;color:var(--muted);">Sin licencias Full/temporales emitidas en la BD de licencias.</div>`;
-
-      const keyReqsHtml = keyReqs.length ? `
-        <div style="margin-top:6px;font-size:11.5px;color:var(--muted);">
-          <strong style="color:var(--text);">Solicitudes en key_requests (${keyReqs.length}):</strong>
-          ${keyReqs.map((r) => `<span class="pill pill-muted mono">#${esc(r.id)} · ${esc(r.created_at)} · ${esc(r.edition || '-')} (${esc(r.status)})</span>`).join(' ')}
-        </div>
-      ` : `<div style="margin-top:4px;font-size:11.5px;color:var(--muted);">Solicitudes en <span class="mono">key_requests</span>: <strong>0</strong></div>`;
-
-      const payTypeBadge = (pt) => pt === 'subscription'
-        ? '<span class="pill pill-purple">Suscripción anual</span>'
-        : pt === 'one_time'
-          ? '<span class="pill pill-cyan">Pago único</span>'
-          : esc(pt || '—');
-
-      const payHtml = payments.length ? `
-        <div class="table-wrap" style="margin-top:6px;">
-          <table>
-            <thead><tr><th>Fecha</th><th>USD</th><th>Modalidad</th><th>Plan</th><th>Estado</th></tr></thead>
-            <tbody>
-              ${payments.map((p) => `
-                <tr>
-                  <td class="mono">${esc(p.date)}</td>
-                  <td class="mono" style="color:var(--green);font-weight:700">${fmtUsd(p.amount_usd)}</td>
-                  <td>${payTypeBadge(p.payment_type)}</td>
-                  <td class="mono">${esc(p.price_code || '—')}</td>
-                  <td><span class="pill ${p.status === 'completed' ? 'pill-green' : 'pill-muted'}">${esc(p.status)}</span></td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      ` : '';
-
-      const crmNotesHtml = c.crm_notes ? `
-        <div style="margin-top:6px;background:rgba(46,230,214,0.07);border:1px solid rgba(46,230,214,0.24);border-radius:10px;padding:9px 11px;font-size:12px;">
-          <div style="font-size:11px;font-weight:800;color:var(--cyan);text-transform:uppercase;margin-bottom:4px;">📝 Notas CRM (WordPress)</div>
-          <div style="white-space:pre-wrap;line-height:1.45;color:#dbe4ff;">${esc(c.crm_notes)}</div>
-        </div>
-      ` : '';
-
-      const clicksHtml = (mp.recent_clicks || []).length ? `
-        <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
-          <div style="font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;">🖱️ Clics recientes en Newsletters (MailPoet)</div>
-          ${mp.recent_clicks.map((cl) => `
-            <div style="font-size:12px;background:rgba(255,200,61,0.08);border:1px solid rgba(255,200,61,0.24);padding:6px 9px;border-radius:8px;">
-              <span class="mono" style="color:var(--gold);font-weight:700">${esc(cl.date)}</span> · ${esc(cl.newsletter)}
-              ${cl.via_alias ? `<span class="pill pill-muted">vía ${esc(cl.via_alias)}</span>` : ''}
-            </div>
-          `).join('')}
-        </div>
-      ` : '';
-
-      // 6. Full Email History Timeline
-      const hist = c.email_history || [];
-      const topicsHtml = (c.email_meta.topics || []).map((x) => `<span class="pill pill-blue">${esc(x)}</span>`).join(' ');
-      const compHtml = (c.email_meta.competitors || []).map((x) => `<span class="pill pill-magenta">⚔️ ${esc(x)}</span>`).join(' ');
-      const histHtml = hist.length ? `
-        <div class="timeline">
-          ${hist.map((m) => `
-            <article class="msg-card ${m.dir === 'IN' ? 'in' : 'out'}">
-              <div class="msg-head">
-                <div>
-                  <span class="pill ${m.dir === 'IN' ? 'pill-cyan' : 'pill-purple'}">${m.dir === 'IN' ? '📥 RECIBIDO' : '📤 ENVIADO'}</span>
-                  <strong style="color:var(--text);margin-left:6px;">${esc(m.from_name || (m.dir === 'IN' ? c.name || c.email : 'Equipo'))}</strong>
-                </div>
-                <span class="mono">${esc(m.date)} UTC</span>
-              </div>
-              <div class="msg-subj">${esc(m.subject)}</div>
-              <div class="msg-body">${esc(m.body_top)}</div>
-              ${m.body_full ? `
-                <details class="full-msg">
-                  <summary>Ver hilo completo citado (${m.body_full.length} chars)</summary>
-                  <pre>${esc(m.body_full)}</pre>
-                </details>
-              ` : ''}
-            </article>
-          `).join('')}
-        </div>
-      ` : `<div style="color:var(--muted);font-size:13px;padding:8px 0;">Sin intercambio de correos previo registrado (será el primer contacto humano 1:1).</div>`;
-
-      const backToDirHtml = fromDirectory ? `
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-          <button class="btn-ghost btn-sm" type="button" id="backToDirBtn">⬅️ Volver a tabla Todos (${total})</button>
-          <span style="font-size:12px;color:var(--muted);">Vista detallada desde el directorio completo (usa Anterior/Siguiente o ↑/↓ para recorrer la tabla filtrada)</span>
-        </div>
-      ` : '';
-      const histTotal = c.email_history_total || hist.length;
-      const histCountStr = histTotal > hist.length ? `${hist.length} de ${histTotal}` : `${hist.length}`;
-
-      pane.innerHTML = `
-        ${backToDirHtml}
-        <section class="card">
-          <div class="detail-head">
-            <div style="min-width:0;flex:1;">
-              <div class="dh-title">
-                <span>${c.queue_rank ? '#' + c.queue_rank + ' · ' : ''}${esc(c.name || c.email)}</span>
-                <span style="font-size:15px">${flagOf(c.country_code)}</span>
-              </div>
-              <div class="dh-email">
-                <span class="mono">${esc(c.email)}</span>
-                <button class="btn-ghost btn-sm" type="button" id="copyEmailBtn">📋 Copiar email</button>
-                <span style="color:var(--muted);font-size:12px;">· ${esc(locStr)}</span>
-              </div>
-              <div class="dh-badges">
-                ${prodPill}
-                <span class="pill ${cm.cls}">${cm.short}</span>
-                ${deliveryBadge(rep)}
-                <span class="pill pill-muted">Persona: ${esc(c.persona)}</span>
-                <span class="pill pill-gold mono">ICP ${c.icp_score}/100</span>
-                <span class="pill pill-muted">${esc(c.license_category)}</span>
-                ${c.revenue_usd > 0 ? `<span class="pill pill-green mono">${fmtUsd(c.revenue_usd)}</span>` : ''}
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-              <div style="display:flex;gap:6px;align-items:center;">
-                <button class="btn-ghost btn-sm" type="button" id="prevLeadBtn" ${idx <= 0 ? 'disabled' : ''}>⬅️ Anterior</button>
-                <span class="mono" style="font-size:11.5px;color:var(--muted);">${idx + 1} / ${total}</span>
-                <button class="btn-ghost btn-sm" type="button" id="nextLeadBtn" ${idx >= total - 1 ? 'disabled' : ''}>Siguiente ➡️</button>
-              </div>
-              <div class="decision-bar" id="decisionBar">
-                ${contactIsSent
-                  ? '<span class="pill pill-green" style="padding:7px 12px;font-size:12px;">✅ Enviado · protegido por ledger</span>'
-                  : `
-                <button class="dec-btn ${rev.status === 'APROBADO' ? 'sel-APROBADO' : ''}" data-dec="APROBADO" type="button">✅ Aprobar</button>
-                <button class="dec-btn ${rev.status === 'PAUSADO' ? 'sel-PAUSADO' : ''}" data-dec="PAUSADO" type="button">⏸ Pausar</button>
-                <button class="dec-btn ${rev.status === 'DESCARTADO' ? 'sel-DESCARTADO' : ''}" data-dec="DESCARTADO" type="button">❌ Descartar</button>
-                <button class="dec-btn ${rev.status === 'PENDIENTE' ? 'sel-PENDIENTE' : ''}" data-dec="PENDIENTE" type="button">↩️ Pendiente</button>
-                `}
-              </div>
-            </div>
-          </div>
-          <div class="note-row">
-            <span style="font-size:12px;color:var(--muted);font-weight:700;">📝 Nota interna:</span>
-            <input id="reviewNoteInput" class="note-input" type="text" value="${esc(rev.note || '')}" placeholder="Escribe una nota rápida para este lead o cliente (se guarda automáticamente)..." />
-          </div>
-        </section>
-
-        ${alertHtml}
-        ${replyHtml}
-
-        <section class="ctx-grid">
-          <div class="ctx-card">
-            <div class="ctx-title">
-              <span>🖥️ Uso de la App & Hardware</span>
-              <span class="pill ${audioCls}">${esc(t.audio_tier)}</span>
-            </div>
-            <div class="mini-stats">
-              <div class="mst"><div class="mst-v mono">${fmt(t.distinct_active_days)}</div><div class="mst-l">Días act.</div></div>
-              <div class="mst"><div class="mst-v mono">${t.estimated_hours}h</div><div class="mst-l">Horas est.</div></div>
-              <div class="mst"><div class="mst-v mono">${fmt(t.total_events)}</div><div class="mst-l">Eventos</div></div>
-              <div class="mst"><div class="mst-v mono" style="color:${t.days_inactive !== null && t.days_inactive <= 14 ? 'var(--green)' : 'var(--gold)'}">${t.days_inactive !== null ? t.days_inactive + 'd' : '—'}</div><div class="mst-l">Inactivo</div></div>
-            </div>
-            <div class="kv-list">
-              <div class="kv-row"><span class="kv-k">Primera / Última vez</span><span class="kv-v mono">${esc(t.first_seen || '—')} → ${esc(t.last_seen || '—')}</span></div>
-              <div class="kv-row"><span class="kv-k">Sesión máx.</span><span class="kv-v mono">${t.max_session_hours} h</span></div>
-              <div class="kv-row"><span class="kv-k">SO / Equipo</span><span class="kv-v">${esc(t.os_detail || t.os_family)} · ${t.cpu_cores || '?'} cores · ${t.ram_gb ? t.ram_gb + ' GB RAM' : 'RAM n/d'}${t.disk_gb ? ' · ' + t.disk_gb + ' GB disco' : ''}</span></div>
-              ${t.timezone ? `<div class="kv-row"><span class="kv-k">Zona horaria PC</span><span class="kv-v mono">${esc(t.timezone)}</span></div>` : ''}
-              <div class="kv-row"><span class="kv-k">Versiones Pulse</span><span class="kv-v mono">${esc((t.versions || []).join(', ') || 'Sin descarga Pulse')}</span></div>
-              <div class="kv-row"><span class="kv-k">Máquinas (${t.machine_count})</span><span class="kv-v mono">${esc((t.machines_masked || []).join(', ') || '—')}</span></div>
-              ${(t.alias_emails || []).length ? `<div class="kv-row"><span class="kv-k">Otros emails en su PC</span><span class="kv-v mono" style="color:var(--gold)">${esc(t.alias_emails.join(', '))}</span></div>` : ''}
-            </div>
-            <div style="display:flex;flex-direction:column;gap:5px;padding-top:6px;border-top:1px solid var(--border);">
-              <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;">🎧 Dispositivos de Audio Detectados ${t.audio_errors ? `(⚠️ ${t.audio_errors} errores)` : ''}</div>
-              <div style="display:flex;flex-wrap:wrap;gap:5px;">${audioDevsHtml}</div>
-            </div>
-          </div>
-
-          <div class="ctx-card">
-            <div class="ctx-title">
-              <span>🎛️ Funciones Usadas & Señales</span>
-              <span class="mono" style="font-size:11px;color:var(--muted);">${c.days_to_buy !== null ? 'Compró en ' + c.days_to_buy + 'd' : ''}</span>
-            </div>
-            <div class="feat-grid">
-              ${featItems.map((f) => `<span class="feat-chip ${f.on ? f.cls : ''}">${esc(f.lbl)}</span>`).join('')}
-            </div>
-            ${(t.dmx_devices || []).length ? `<div style="font-size:12px;"><strong>Interfaces DMX:</strong> <span class="mono" style="color:var(--cyan)">${esc(t.dmx_devices.join(', '))}</span></div>` : ''}
-            ${(t.upsell_features || []).length ? `<div style="font-size:12px;"><strong>Pantallas Upsell vistas:</strong> <span style="color:var(--gold)">${esc(t.upsell_features.join(', '))}</span></div>` : ''}
-            ${(t.styles_sample || []).length ? `<div style="font-size:12px;color:var(--muted);"><strong>Estilos probados:</strong> ${esc(t.styles_sample.join(', '))}</div>` : ''}
-            ${(t.sections_visited || []).length ? `<div style="font-size:12px;color:var(--muted);"><strong>Secciones visitadas:</strong> ${esc(t.sections_visited.join(', '))}</div>` : ''}
-          </div>
-        </section>
-
-        <section class="ctx-grid">
-          <div class="ctx-card">
-            <div class="ctx-title"><span>💳 Licencias, Pagos, Atribución & MailPoet</span></div>
-            <div class="kv-list">
-              <div class="kv-row"><span class="kv-k">Atribución</span><span class="kv-v">${esc(c.attribution_channel)} ${c.attribution_detail ? '· ' + esc(c.attribution_detail) : ''}</span></div>
-              <div class="kv-row"><span class="kv-k">MailPoet</span><span class="kv-v mono">${esc(mp.status || '—')} · ${esc(mp.estado_contacto || '—')}</span></div>
-              <div class="kv-row"><span class="kv-k">Última apertura / clic MP</span><span class="kv-v mono">${esc(mp.last_open_at || '—')} / ${esc(mp.last_click_at || '—')}</span></div>
-              ${(mp.tags || []).length ? `<div class="kv-row"><span class="kv-k">Tags MailPoet</span><span class="kv-v">${mp.tags.map((x) => `<span class="pill pill-muted">${esc(x)}</span>`).join(' ')}</span></div>` : ''}
-            </div>
-            ${clicksHtml}
-            ${crmNotesHtml}
-            <div style="margin-top:4px;">
-              <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">🔑 Licencias en BD (claves enmascaradas)</div>
-              ${keysHtml}
-              ${keyReqsHtml}
-            </div>
-            ${payHtml ? `<div style="margin-top:4px;"><div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">💵 Pagos Stripe</div>${payHtml}</div>` : ''}
-          </div>
-
-          <div class="ctx-card">
-            <div class="ctx-title">
-              <span>💬 Historial de Correos (${histCountStr})</span>
-              <span class="pill ${c.email_meta.conv_status === 'PENDIENTE_RESPUESTA_CARLOS' ? 'pill-red' : contactIsSent ? 'pill-green' : 'pill-muted'}">${esc(c.email_meta.conv_status)}</span>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:5px;">
-              <span class="pill pill-muted">📥 IN: ${c.email_meta.inbound_count}</span>
-              <span class="pill pill-muted">📤 OUT: ${c.email_meta.outbound_count}</span>
-              ${topicsHtml}
-              ${compHtml}
-            </div>
-            ${histHtml}
-          </div>
-        </section>
-      `;
-
-      // Bind detail buttons (scoped inside pane so workspace & directory inspector never collide!)
-      const qSel = (id) => pane.querySelector('#' + id);
-      if (fromDirectory && qSel('backToDirBtn')) {
-        qSel('backToDirBtn').addEventListener('click', () => {
-          state.allSelectedEmail = '';
-          renderAll();
-        });
-      }
-      qSel('copyEmailBtn').addEventListener('click', () => copyText(c.email, 'Email'));
-      if (rep) {
-        qSel('copySubjBtn').addEventListener('click', () => copyText(rep.subject, 'Asunto'));
-        qSel('copyBodyBtn').addEventListener('click', () => copyText(rep.body, 'Cuerpo del correo'));
-        if (isLongMailto && qSel('openMailBtn')) {
-          qSel('openMailBtn').addEventListener('click', () => {
-            copyText(rep.body, 'Cuerpo completo (pégalo en Mail con ⌘V)');
-          });
-        }
-      }
-      qSel('prevLeadBtn').addEventListener('click', () => moveSelection(-1));
-      qSel('nextLeadBtn').addEventListener('click', () => moveSelection(1));
-      qSel('decisionBar').addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-dec]');
-        if (!btn) return;
-        setReview(c.email, { status: btn.dataset.dec });
-        showToast(`Estado actualizado: ${btn.dataset.dec}`);
-        renderKPIs();
-        if (fromDirectory) renderDirectoryInspector();
-        else renderListAndDetail();
-      });
-      qSel('reviewNoteInput').addEventListener('input', (e) => {
-        setReview(c.email, { note: e.target.value });
-      });
-    }
-
-    function moveSelection(delta) {
-      if (state.tab === 'all' && state.allSelectedEmail) {
-        const list = getDirectoryRows();
-        if (!list.length) return;
-        const idx = list.findIndex((c) => c.email === state.allSelectedEmail);
-        const nextIdx = Math.max(0, Math.min(list.length - 1, (idx < 0 ? 0 : idx) + delta));
-        state.allSelectedEmail = list[nextIdx].email;
-        renderDirectoryInspector();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-      const list = getFilteredList();
-      if (!list.length) return;
-      const idx = list.findIndex((c) => c.email === state.selectedEmail);
-      const nextIdx = Math.max(0, Math.min(list.length - 1, (idx < 0 ? 0 : idx) + delta));
-      state.selectedEmail = list[nextIdx].email;
-      renderListAndDetail();
-      const activeEl = document.querySelector('#leadList .lead-item.active');
-      if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
-    }
-
-    function renderICPView() {
-      // 1. Monthly chart
+      // Charts
       const mCtx = document.getElementById('monthlyChart');
       if (monthlyChart) monthlyChart.destroy();
       const mt = DATA.monthly_trends || [];
@@ -1373,7 +1911,7 @@
           labels: mt.map((m) => m.month),
           datasets: [
             { label: 'Máquinas reales', data: mt.map((m) => m.real_machines), backgroundColor: 'rgba(46,230,214,0.45)', borderColor: '#2ee6d6', borderWidth: 1.5, borderRadius: 6 },
-            { label: 'Emails identificados', data: mt.map((m) => m.identified_email), backgroundColor: 'rgba(139,108,255,0.65)', borderColor: '#8b6cff', borderWidth: 1.5, borderRadius: 6 },
+            { label: 'Con email', data: mt.map((m) => m.identified_email), backgroundColor: 'rgba(139,108,255,0.65)', borderColor: '#8b6cff', borderWidth: 1.5, borderRadius: 6 },
             { label: 'Ventas Stripe', data: mt.map((m) => m.stripe_sales), type: 'line', yAxisID: 'y1', borderColor: '#ffc83d', backgroundColor: '#ffc83d', borderWidth: 2.5, pointRadius: 4, tension: 0.3 },
           ]
         },
@@ -1381,60 +1919,56 @@
           responsive: true, maintainAspectRatio: false, animation: false,
           plugins: { legend: { labels: { color: '#cbd5f5', font: { size: 11.5 } } } },
           scales: {
-            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#93a0c2' } },
-            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#93a0c2' } },
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#9aa7c7' } },
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9aa7c7' } },
             y1: { beginAtZero: true, position: 'right', grid: { display: false }, ticks: { color: '#ffc83d', stepSize: 1 } },
           }
         }
       });
 
-      // 2. Buyers vs Non-buyers ICP comparison
       const iCtx = document.getElementById('icpCompareChart');
       if (icpCompareChart) icpCompareChart.destroy();
       const sb = DATA.cohorts_comparison?.stripe_buyers || {};
       const nb = DATA.cohorts_comparison?.all_app_non_buyers || {};
       const metrics = [
         ['HW DJ/Interfaz Pro', sb.pro_audio_pct, nb.pro_audio_pct],
-        ['Media Propia', sb.custom_media_pct, nb.custom_media_pct],
-        ['Estilos Propios', sb.custom_style_pct, nb.custom_style_pct],
+        ['Media propia', sb.custom_media_pct, nb.custom_media_pct],
+        ['Estilos propios', sb.custom_style_pct, nb.custom_style_pct],
         ['Logo / Marca', sb.artist_brand_pct, nb.artist_brand_pct],
         ['NDI o Spout', sb.ndi_or_spout_pct, nb.ndi_or_spout_pct],
-        ['2ª Pantalla', sb.separate_window_pct, nb.separate_window_pct],
         ['DMX usado', sb.dmx_used_pct, nb.dmx_used_pct],
-        ['Conversación previa', sb.had_email_conv_pct, nb.had_email_conv_pct],
+        ['Habló por email', sb.had_email_conv_pct, nb.had_email_conv_pct],
       ];
       icpCompareChart = new Chart(iCtx, {
         type: 'bar',
         data: {
           labels: metrics.map((m) => m[0]),
           datasets: [
-            { label: `Compradores Stripe (n=${sb.count || 15})`, data: metrics.map((m) => m[1]), backgroundColor: '#2ee6d6', borderRadius: 6 },
-            { label: `No-compradores app (n=${nb.count || 327})`, data: metrics.map((m) => m[2]), backgroundColor: 'rgba(147,160,194,0.35)', borderRadius: 6 },
+            { label: `Compradores (n=${sb.count || 15})`, data: metrics.map((m) => m[1]), backgroundColor: '#2ee6d6', borderRadius: 6 },
+            { label: `No compradores (n=${nb.count || 327})`, data: metrics.map((m) => m[2]), backgroundColor: 'rgba(154,167,199,0.35)', borderRadius: 6 },
           ]
         },
         options: {
           responsive: true, maintainAspectRatio: false, animation: false, indexAxis: 'y',
           plugins: { legend: { labels: { color: '#cbd5f5', font: { size: 11.5 } } } },
           scales: {
-            x: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#93a0c2', callback: (v) => v + '%' } },
+            x: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9aa7c7', callback: (v) => v + '%' } },
             y: { grid: { display: false }, ticks: { color: '#e6ecff', font: { size: 11.5, weight: '600' } } },
           }
         }
       });
 
-      // 3. Funnel bars
       const fn = DATA.funnel || {};
       const topN = Math.max(fn.machines_opened_app || 1, 1);
       const steps = [
-        ['1. Máquinas reales abrieron Pulse', fn.machines_opened_app],
-        ['2. Usuarios identificados con email', fn.identified_with_email],
-        ['3. Personalizaron logo o media propia', fn.customized_media_or_brand],
-        ['4. Exploraron 5+ estilos visuales', fn.explored_5plus_styles],
-        ['5. Configuraron entrada de audio', fn.connected_audio_any],
-        ['6. HW DJ / Interfaz Pro / Stream real', fn.pro_or_stream_audio_detected],
-        ['7. Exploraron / conectaron USB-DMX', fn.dmx_explored_or_connected],
-        ['8. Pulsaron Comprar / Checkout', fn.clicked_buy_or_checkout],
-        ['9. Compradores Stripe completados', fn.completed_stripe_payment],
+        ['1. Máquinas reales abrieron la app', fn.machines_opened_app],
+        ['2. Registraron email', fn.identified_with_email],
+        ['3. Personalizaron logo o media', fn.customized_media_or_brand],
+        ['4. Configuraron entrada de audio', fn.connected_audio_any],
+        ['5. Equipo DJ / Interfaz Pro / Stream', fn.pro_or_stream_audio_detected],
+        ['6. Exploraron / conectaron USB-DMX', fn.dmx_explored_or_connected],
+        ['7. Pulsaron Comprar', fn.clicked_buy_or_checkout],
+        ['8. Compraron en Stripe', fn.completed_stripe_payment],
       ];
       document.getElementById('funnelBars').innerHTML = steps.map(([lbl, val]) => {
         const pct = Math.round(((val || 0) / topN) * 1000) / 10;
@@ -1443,29 +1977,19 @@
             <span style="font-weight:600;">${esc(lbl)}</span>
             <div class="f-track"><div class="f-fill" style="width:${Math.max(2, pct)}%"></div></div>
             <span class="mono" style="text-align:right;color:var(--cyan);font-weight:700">${fmt(val)} (${pct}%)</span>
-          </div>
-        `;
+          </div>`;
       }).join('');
 
-      // 4. Playbooks table
       const pbs = DATA.playbooks || [];
       document.getElementById('playbooksTable').innerHTML = `
         <table>
-          <thead><tr><th>Cohorte</th><th>Prioridad</th><th>Disparador Interno</th><th>Qué NUNCA decir</th><th>Ángulo Stealth</th><th>Cadencia</th></tr></thead>
+          <thead><tr><th>Cohorte</th><th>Prioridad</th><th>Qué NUNCA decir</th><th>Ángulo Stealth</th></tr></thead>
           <tbody>
-            ${pbs.map((p) => `
-              <tr>
-                <td class="mono" style="font-weight:700;color:var(--cyan)">${esc(p.cohort)}</td>
-                <td>${esc(p.prioridad)}</td>
-                <td>${esc(p.disparador_interno)}</td>
-                <td style="color:#fecdd3">${esc(p.que_nunca_decir)}</td>
-                <td>${esc(p.angulo_stealth)}</td>
-                <td>${esc(p.cadencia_y_canal)}</td>
-              </tr>
-            `).join('')}
+            ${pbs.map((p) => `<tr><td class="mono" style="font-weight:700;color:var(--cyan)">${esc(p.cohort)}</td><td>${esc(p.prioridad)}</td><td style="color:#fecdd3">${esc(p.que_nunca_decir)}</td><td>${esc(p.angulo_stealth)}</td></tr>`).join('')}
           </tbody>
-        </table>
-      `;
+        </table>`;
+
+      renderDirectoryTable();
     }
 
     function getDirectoryRows() {
@@ -1473,138 +1997,137 @@
       return (DATA.contacts || []).filter((c) => {
         if (state.dirProduct !== 'ALL' && c.product_line !== state.dirProduct) return false;
         if (!q) return true;
-        return [
-          c.email, c.name, c.country_code, c.country_name, c.city, c.cohort,
-          c.persona, c.license_category, c.highlight, c.crm_notes || '',
-        ].join(' ').toLowerCase().includes(q);
+        return [c.email, c.name, c.country_code, c.country_name, c.cohort, c.simple_tag, c.highlight].join(' ').toLowerCase().includes(q);
       });
     }
 
-    function renderDirectory() {
+    function renderDirectoryTable() {
+      const inspSlot = document.getElementById('dirInspectorSlot');
       const rows = getDirectoryRows();
-      const p1 = DATA.queue_summary?.product_primary_label || 'Principal';
-      const p2 = DATA.queue_summary?.product_legacy_label || 'Legacy';
+      if (state.dirSelectedEmail) {
+        const idx = rows.findIndex((c) => c.email === state.dirSelectedEmail);
+        const sel = rows[idx] || (DATA.contacts || []).find((c) => c.email === state.dirSelectedEmail);
+        if (sel) {
+          inspSlot.hidden = false;
+          renderContactCard(inspSlot, sel, {
+            idx: idx >= 0 ? idx : 0,
+            total: idx >= 0 ? rows.length : 1,
+            backLabel: '⬅️ Cerrar ficha',
+            onBack: () => { state.dirSelectedEmail = ''; renderDirectoryTable(); },
+            onPrev: () => { if (idx > 0) { state.dirSelectedEmail = rows[idx - 1].email; renderDirectoryTable(); } },
+            onNext: () => { if (idx >= 0 && idx < rows.length - 1) { state.dirSelectedEmail = rows[idx + 1].email; renderDirectoryTable(); } },
+            onAfterDecision: () => renderDirectoryTable(),
+          });
+        } else {
+          state.dirSelectedEmail = '';
+          inspSlot.hidden = true;
+        }
+      } else {
+        inspSlot.hidden = true;
+      }
+
       document.getElementById('dirTableWrap').innerHTML = `
         <table>
-          <thead>
-            <tr><th>Producto</th><th>Cohorte</th><th>ICP</th><th>Email</th><th>Nombre</th><th>País</th><th>Días / Hrs</th><th>Audio</th><th>DMX / NDI</th><th>Mail</th><th>Borrador</th></tr>
-          </thead>
+          <thead><tr><th>Estado</th><th>Tipo</th><th>ICP</th><th>Email</th><th>Nombre</th><th>País</th><th>Uso</th></tr></thead>
           <tbody>
-            ${rows.map((c) => {
-              const cm = COHORT_META[c.cohort] || { short: c.cohort, cls: 'pill-muted' };
-              return `
-                <tr class="clickable" data-open-email="${esc(c.email)}">
-                  <td><span class="pill ${c.product_line === 'DJMIRROR_TRAKTOR_LEGACY' ? 'pill-purple' : 'pill-cyan'}">${c.product_line === 'DJMIRROR_TRAKTOR_LEGACY' ? esc(p2) : esc(p1)}</span></td>
-                  <td><span class="pill ${cm.cls}">${cm.short}</span></td>
-                  <td class="mono" style="font-weight:700">${c.icp_score}</td>
-                  <td class="mono" style="color:var(--cyan)">${esc(c.email)}</td>
-                  <td>${esc(c.name || '—')}</td>
-                  <td>${flagOf(c.country_code)} ${esc(c.country_code || '??')}</td>
-                  <td class="mono">${c.telemetry.distinct_active_days}d / ${c.telemetry.estimated_hours}h</td>
-                  <td style="font-size:11px">${esc(c.telemetry.audio_tier)}</td>
-                  <td class="mono">${c.telemetry.dmx_events} / ${c.telemetry.ndi_events + c.telemetry.spout_events}</td>
-                  <td style="font-size:11px">${esc(c.email_meta.conv_status)}</td>
-                  <td>${c.reply ? ((c.reply.delivery_state === 'ENVIADO' || c.reply.aprobacion_carlos === 'ENVIADO') ? '<span class="pill pill-green">✅ ENVIADO</span>' : '<span class="pill pill-cyan">Sí (ES+Orig)</span>') : '<span style="color:var(--muted)">—</span>'}</td>
-                </tr>
-              `;
-            }).join('')}
+            ${rows.slice(0, 400).map((c) => `
+              <tr class="clickable" data-dir-email="${esc(c.email)}">
+                <td>${c.reply ? statusBadgeHtml(effectiveStatus(c), effectiveReply(c)?.sent_at) : '<span style="color:var(--muted)">—</span>'}</td>
+                <td><span class="pill pill-muted">${esc(c.simple_tag || c.cohort)}</span></td>
+                <td class="mono" style="font-weight:700">${c.icp_score}</td>
+                <td class="mono" style="color:var(--cyan)">${esc(c.email)}</td>
+                <td>${esc(c.name || '—')}</td>
+                <td>${flagOf(c.country_code)} ${esc(c.country_code || '')}</td>
+                <td class="mono">${c.telemetry.distinct_active_days}d / ${c.telemetry.estimated_hours}h</td>
+              </tr>`).join('')}
           </tbody>
-        </table>
+        </table>`;
+    }
+
+    // ── Autopilot Modal ─────────────────────────────────────────────────────
+    function openAutopilotModal() {
+      const ap = CLOUD.autopilot || {};
+      state.apDraft = {
+        mode: ap.mode || 'SOLO_APROBADOS',
+        daily_cap: Number(ap.daily_cap || 10),
+        window_start_cet: ap.window_start_cet || '08:30',
+        window_end_cet: ap.window_end_cet || '22:00',
+        allowed_cohorts: Array.isArray(ap.allowed_cohorts) ? [...ap.allowed_cohorts] : SAFE_AUTOPILOT_COHORTS.map((x) => x.id),
+      };
+      renderAutopilotModal();
+      document.getElementById('autopilotModal').hidden = false;
+    }
+
+    function renderAutopilotModal() {
+      const d = state.apDraft;
+      const ws = CLOUD.worker_status || {};
+      const winTxt = ws.in_window === false ? '🌙 Fuera de horario (esperando ventana)' : '🟢 En horario de envío';
+      document.getElementById('apWorkerBanner').innerHTML = `
+        <span>🤖 <strong>Mac activo cada ${ws.interval_minutes || 15} min</strong> · Última revisión: <strong>${esc(ws.last_run_at || 'pendiente')}</strong> · ${winTxt}</span>
+        <span class="mono">Hoy: ${ws.sent_today ?? 0}/${d.daily_cap}</span>
       `;
-    }
+      document.querySelectorAll('#apModeGrid .mode-card').forEach((btn) => {
+        const m = btn.dataset.apMode;
+        btn.className = 'mode-card' + (d.mode === m ? ` sel-${m}` : '');
+      });
+      document.querySelectorAll('#apCapRow .cap-btn').forEach((btn) => {
+        btn.classList.toggle('active', Number(btn.dataset.cap) === Number(d.daily_cap));
+      });
+      document.getElementById('apWinStart').value = d.window_start_cet;
+      document.getElementById('apWinEnd').value = d.window_end_cet;
 
-    function renderDirectoryInspector() {
-      const rows = getDirectoryRows();
-      const idx = rows.findIndex((x) => x.email === state.allSelectedEmail);
-      const c = idx >= 0 ? rows[idx] : (DATA.contacts || []).find((x) => x.email === state.allSelectedEmail);
-      if (!c) {
-        state.allSelectedEmail = '';
-        renderAll();
-        return;
-      }
-      renderDetail(c, idx >= 0 ? idx : 0, idx >= 0 ? rows.length : 1, 'dirInspectorSection', true);
-    }
+      document.getElementById('apCohortsGrid').innerHTML = SAFE_AUTOPILOT_COHORTS.map((coh) => {
+        const checked = d.allowed_cohorts.includes(coh.id) ? 'checked' : '';
+        return `
+          <label class="cohort-chk">
+            <input type="checkbox" data-ap-coh="${coh.id}" ${checked} />
+            <span>${esc(coh.label)}</span>
+          </label>`;
+      }).join('');
 
-    function openContactFromAnywhere(email) {
-      const c = (DATA.contacts || []).find((x) => x.email === email);
-      if (!c) return;
-      if (c.in_queue) state.tab = 'queue';
-      else if (c.is_customer) state.tab = 'customers';
-      else if (isTraktorOrOther(c)) state.tab = 'traktor';
-      else {
-        // Keep user cleanly inside the Directory tab with full inspector, working Prev/Next & review actions!
-        state.tab = 'all';
-        state.allSelectedEmail = email;
-        renderAll();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-      state.allSelectedEmail = '';
-      state.subFilter = 'ALL';
-      state.lang = 'ALL';
-      state.reviewFilter = 'ALL';
-      state.search = '';
-      state.selectedEmail = email;
-      document.getElementById('searchInput').value = '';
-      document.getElementById('langSelect').value = 'ALL';
-      document.getElementById('reviewSelect').value = 'ALL';
-      renderAll();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function renderAll() {
-      renderMainTabs();
-      renderKPIs();
-      const ws = document.getElementById('workspaceSection');
-      const icpEl = document.getElementById('icpSection');
-      const allEl = document.getElementById('allSection');
-      const dirInspEl = document.getElementById('dirInspectorSection');
-      const isDirInspecting = state.tab === 'all' && !!state.allSelectedEmail;
-      ws.hidden = !['queue', 'customers', 'traktor'].includes(state.tab);
-      icpEl.hidden = state.tab !== 'icp';
-      allEl.hidden = state.tab !== 'all' || isDirInspecting;
-      dirInspEl.hidden = !isDirInspecting;
-
-      if (!ws.hidden) {
-        renderCohortChips();
-        renderListAndDetail();
-      } else if (state.tab === 'icp') {
-        renderICPView();
-      } else if (isDirInspecting) {
-        renderDirectoryInspector();
-      } else if (state.tab === 'all') {
-        renderDirectory();
-      }
+      const logs = CLOUD.activity_log || [];
+      document.getElementById('apActivityLog').innerHTML = logs.length
+        ? logs.slice(0, 15).map((ev) => `
+            <div class="log-item">
+              <span>${ev.email ? `<strong class="mono" style="color:var(--cyan)">${esc(ev.email)}</strong> · ` : ''}${esc(ev.msg)}</span>
+              <span class="mono" style="color:var(--muted);flex-shrink:0;">${esc((ev.ts || '').replace('T', ' ').slice(5, 16))}</span>
+            </div>`).join('')
+        : '<div style="font-size:12.5px;color:var(--muted);">Aún no hay actividad registrada hoy.</div>';
     }
 
     function openExportModal() {
-      const lines = ['Email\tDecision_Carlos\tNotas_Carlos\tFecha'];
-      const sentEmailSet = new Set((DATA?.contacts || []).filter(isReplySent).map((c) => c.email.toLowerCase()));
-      const entries = Object.entries(REVIEW).filter(([em, v]) => {
-        const hasNote = !!(v.note || '').trim();
-        if (sentEmailSet.has(em.toLowerCase())) return hasNote;
-        return v.status !== 'PENDIENTE' || hasNote;
-      });
-      if (!entries.length) {
-        lines.push('(Todavía no has marcado ningún contacto como Aprobado/Pausado/Descartado ni añadido notas.)');
-      } else {
-        for (const [em, v] of entries) {
-          const stOut = sentEmailSet.has(em.toLowerCase()) ? 'ENVIADO' : v.status;
-          lines.push(`${em}\t${stOut}\t${(v.note || '').replace(/\t|\n/g, ' ')}\t${v.ts || ''}`);
-        }
+      const lines = ['Email\tEstado\tCorreccion_ES\tNota_Interna\tFecha'];
+      for (const [em, v] of Object.entries(CLOUD.decisions || {})) {
+        if (!v || (v.decision === 'PENDIENTE' && !v.internal_note)) continue;
+        lines.push(`${em}\t${v.decision || 'PENDIENTE'}\t${(v.correction_note || '').replace(/\t|\n/g, ' ')}\t${(v.internal_note || '').replace(/\t|\n/g, ' ')}\t${v.updated_at || ''}`);
       }
       document.getElementById('exportTa').value = lines.join('\n');
       document.getElementById('exportModal').hidden = false;
     }
 
-    function openDashboard(decrypted) {
+    function renderCurrentView() {
+      document.querySelectorAll('#mainNav button').forEach((b) => b.classList.toggle('active', b.dataset.view === state.view));
+      document.getElementById('focusView').hidden = state.view !== 'focus';
+      document.getElementById('listView').hidden = state.view !== 'list';
+      document.getElementById('summaryView').hidden = state.view !== 'summary';
+      updateHeaderSyncUI();
+      if (state.view === 'focus') renderFocusView();
+      else if (state.view === 'list') renderListView();
+      else renderSummaryView();
+    }
+
+    function openDashboard(decrypted, syncToken) {
       DATA = decrypted;
-      loadReview();
+      SYNC_TOKEN = syncToken;
+      if (DATA.review_state_snapshot && Object.keys(DATA.review_state_snapshot).length) {
+        mergeCloudState(DATA.review_state_snapshot);
+      }
+      loadLocalCloudCache();
+
       document.title = DATA.brand_title || 'Panel Privado';
       document.getElementById('brandTitle').textContent = DATA.brand_title || 'Panel Privado';
       document.getElementById('brandShort').textContent = DATA.brand_short || 'LP';
       document.getElementById('footerText').textContent = DATA.footer_text || '';
-      document.getElementById('updatedAt').textContent = `Actualizado: ${DATA.updated_at} · Datos BD/IMAP: ${DATA.data_extracted_at || 'hoy'}`;
       document.getElementById('sheetLink').href = DATA.sheet_url || '#';
       document.getElementById('rrssLink').href = DATA.rrss_url || '../';
       const dirProdSel = document.getElementById('dirProductFilter');
@@ -1615,93 +2138,148 @@
 
       if (!BOUND) {
         BOUND = true;
-        document.getElementById('mainTabs').addEventListener('click', (e) => {
-          const btn = e.target.closest('button[data-tab]');
+        document.getElementById('mainNav').addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-view]');
           if (!btn) return;
-          state.tab = btn.dataset.tab;
-          state.subFilter = 'ALL';
-          state.selectedEmail = '';
-          state.allSelectedEmail = '';
-          renderAll();
+          state.view = btn.dataset.view;
+          renderCurrentView();
         });
-        document.getElementById('cohortChips').addEventListener('click', (e) => {
-          const btn = e.target.closest('button[data-sub]');
+        document.getElementById('focusBuckets').addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-bucket]');
           if (!btn) return;
-          state.subFilter = btn.dataset.sub;
-          renderCohortChips();
-          renderListAndDetail();
+          state.focusBucket = btn.dataset.bucket;
+          state.focusEmail = '';
+          renderFocusView();
+        });
+        document.getElementById('listSubTabs').addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-ltab]');
+          if (!btn) return;
+          state.listTab = btn.dataset.ltab;
+          state.listSubFilter = 'ALL';
+          state.listSelectedEmail = '';
+          renderListView();
+        });
+        document.getElementById('listChips').addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-lchip]');
+          if (!btn) return;
+          state.listSubFilter = btn.dataset.lchip;
+          renderListView();
         });
         document.getElementById('leadList').addEventListener('click', (e) => {
-          const item = e.target.closest('button[data-email]');
-          if (!item) return;
-          state.selectedEmail = item.dataset.email;
-          renderListAndDetail();
+          const btn = e.target.closest('button[data-lemail]');
+          if (!btn) return;
+          state.listSelectedEmail = btn.dataset.lemail;
+          renderListView();
         });
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-          state.search = e.target.value.trim();
-          renderListAndDetail();
-        });
-        document.getElementById('langSelect').addEventListener('change', (e) => {
-          state.lang = e.target.value;
-          renderListAndDetail();
-        });
-        document.getElementById('reviewSelect').addEventListener('change', (e) => {
-          state.reviewFilter = e.target.value;
-          renderListAndDetail();
-        });
-        document.getElementById('dirSearch').addEventListener('input', (e) => {
-          state.dirSearch = e.target.value.trim();
-          renderDirectory();
-        });
-        document.getElementById('dirProductFilter').addEventListener('change', (e) => {
-          state.dirProduct = e.target.value;
-          renderDirectory();
-        });
+        document.getElementById('listSearch').addEventListener('input', (e) => { state.listSearch = e.target.value.trim(); renderListView(); });
+        document.getElementById('listLang').addEventListener('change', (e) => { state.listLang = e.target.value; renderListView(); });
+        document.getElementById('listStateFilter').addEventListener('change', (e) => { state.listState = e.target.value; renderListView(); });
+
+        document.getElementById('dirSearch').addEventListener('input', (e) => { state.dirSearch = e.target.value.trim(); renderDirectoryTable(); });
+        document.getElementById('dirProductFilter').addEventListener('change', (e) => { state.dirProduct = e.target.value; renderDirectoryTable(); });
         document.getElementById('dirTableWrap').addEventListener('click', (e) => {
-          const tr = e.target.closest('tr[data-open-email]');
+          const tr = e.target.closest('tr[data-dir-email]');
           if (!tr) return;
-          openContactFromAnywhere(tr.dataset.openEmail);
+          state.dirSelectedEmail = tr.dataset.dirEmail;
+          renderDirectoryTable();
+          document.getElementById('dirInspectorSlot').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        // Autopilot modal bindings
+        document.getElementById('autopilotBtn').addEventListener('click', openAutopilotModal);
+        document.getElementById('closeApModalBtn').addEventListener('click', () => { document.getElementById('autopilotModal').hidden = true; });
+        document.getElementById('autopilotModal').addEventListener('click', (e) => {
+          if (e.target.id === 'autopilotModal') document.getElementById('autopilotModal').hidden = true;
+        });
+        document.getElementById('apModeGrid').addEventListener('click', (e) => {
+          const card = e.target.closest('button[data-ap-mode]');
+          if (!card || !state.apDraft) return;
+          state.apDraft.mode = card.dataset.apMode;
+          renderAutopilotModal();
+        });
+        document.getElementById('apCapRow').addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-cap]');
+          if (!btn || !state.apDraft) return;
+          state.apDraft.daily_cap = Number(btn.dataset.cap);
+          renderAutopilotModal();
+        });
+        document.getElementById('apWinStart').addEventListener('change', (e) => { if (state.apDraft) state.apDraft.window_start_cet = e.target.value; });
+        document.getElementById('apWinEnd').addEventListener('change', (e) => { if (state.apDraft) state.apDraft.window_end_cet = e.target.value; });
+        document.getElementById('apCohortsGrid').addEventListener('change', (e) => {
+          const inp = e.target.closest('input[data-ap-coh]');
+          if (!inp || !state.apDraft) return;
+          const id = inp.dataset.apCoh;
+          if (inp.checked && !state.apDraft.allowed_cohorts.includes(id)) state.apDraft.allowed_cohorts.push(id);
+          if (!inp.checked) state.apDraft.allowed_cohorts = state.apDraft.allowed_cohorts.filter((x) => x !== id);
+        });
+        document.getElementById('apPauseAllBtn').addEventListener('click', async () => {
+          if (!state.apDraft) return;
+          state.apDraft.mode = 'PAUSADO';
+          await pushAutopilot(state.apDraft);
+          renderAutopilotModal();
+        });
+        document.getElementById('apSaveBtn').addEventListener('click', async () => {
+          if (!state.apDraft) return;
+          const wasAuto = CLOUD.autopilot?.mode === 'PILOTO_AUTOMATICO';
+          if (state.apDraft.mode === 'PILOTO_AUTOMATICO' && !wasAuto) {
+            const ok = window.confirm(
+              `¿Activar Piloto Automático ahora?\n\n` +
+              `• Enviará hasta ${state.apDraft.daily_cap} correos/día entre ${state.apDraft.window_start_cet} y ${state.apDraft.window_end_cet} CET.\n` +
+              `• Solo cohortes seguras (R1–R6 seleccionadas).\n` +
+              `• NUNCA tocará hilos reales (R0) ni clientes.\n` +
+              `• Puedes pausarlo en 1 clic desde este botón cuando quieras.`
+            );
+            if (!ok) return;
+          }
+          await pushAutopilot(state.apDraft);
+          document.getElementById('autopilotModal').hidden = true;
+        });
+
+        document.getElementById('refreshCloudBtn').addEventListener('click', async () => {
+          await pullCloudState(false);
+          showToast('☁️ Estado actualizado');
         });
         document.getElementById('exportBtn').addEventListener('click', openExportModal);
-        document.getElementById('closeModalBtn').addEventListener('click', () => { document.getElementById('exportModal').hidden = true; });
+        document.getElementById('closeExportBtn').addEventListener('click', () => { document.getElementById('exportModal').hidden = true; });
         document.getElementById('exportModal').addEventListener('click', (e) => {
           if (e.target.id === 'exportModal') document.getElementById('exportModal').hidden = true;
         });
-        document.getElementById('copyExportBtn').addEventListener('click', () => copyText(document.getElementById('exportTa').value, 'Decisiones de revisión'));
-        document.getElementById('clearReviewBtn').addEventListener('click', () => {
-          if (!window.confirm('¿Seguro que quieres borrar todas tus marcas locales (Aprobado/Pausado/Descartado) y notas de este navegador?')) return;
-          REVIEW = {}; saveReview();
-          document.getElementById('exportModal').hidden = true;
-          renderAll();
-          showToast('Marcas locales reiniciadas');
-        });
+        document.getElementById('copyExportBtn').addEventListener('click', () => copyText(document.getElementById('exportTa').value, 'Respaldo de decisiones'));
         document.getElementById('lockBtn').addEventListener('click', lockDashboard);
 
         document.addEventListener('keydown', (e) => {
           if (document.getElementById('appShell').hidden) return;
           const tag = (document.activeElement?.tagName || '').toLowerCase();
           if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-          if (e.key === 'Escape' && state.tab === 'all' && state.allSelectedEmail) {
-            state.allSelectedEmail = '';
-            renderAll();
-            return;
+          if (state.view === 'focus') {
+            if (e.key === 'ArrowRight') document.querySelector('#focusCardSlot #nextCardBtn')?.click();
+            else if (e.key === 'ArrowLeft') document.querySelector('#focusCardSlot #prevCardBtn')?.click();
+          } else if (state.view === 'list') {
+            if (e.key === 'ArrowDown') { e.preventDefault(); document.querySelector('#listDetailSlot #nextCardBtn')?.click(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); document.querySelector('#listDetailSlot #prevCardBtn')?.click(); }
           }
-          const canMove = ['queue', 'customers', 'traktor'].includes(state.tab) || (state.tab === 'all' && !!state.allSelectedEmail);
-          if (!canMove) return;
-          if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); moveSelection(1); }
-          else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); moveSelection(-1); }
         });
       }
 
       document.getElementById('vaultGate').hidden = true;
       document.getElementById('appShell').hidden = false;
-      renderAll();
+      renderCurrentView();
+      pullCloudState(false);
+
+      if (POLL_TIMER) clearInterval(POLL_TIMER);
+      POLL_TIMER = setInterval(() => {
+        if (!document.hidden && !document.getElementById('appShell').hidden) {
+          pullCloudState(true);
+        }
+      }, 45000);
     }
 
     function lockDashboard() {
       localStorage.removeItem(STORAGE_KEY);
       sessionStorage.removeItem(STORAGE_KEY);
+      if (POLL_TIMER) { clearInterval(POLL_TIMER); POLL_TIMER = null; }
       DATA = null;
+      SYNC_TOKEN = '';
       if (monthlyChart) { monthlyChart.destroy(); monthlyChart = null; }
       if (icpCompareChart) { icpCompareChart.destroy(); icpCompareChart = null; }
       document.title = 'Panel Privado · Acceso Restringido';
@@ -1721,37 +2299,26 @@
       try {
         if (!ENVELOPE) {
           let resp;
-          try {
-            resp = await fetch('./data/leads.enc.json?v=' + Date.now());
-          } catch (_) {
-            const netErr = new Error('No se pudo conectar para cargar el archivo cifrado. Comprueba tu conexión.');
-            netErr.code = 'NETWORK_ERROR';
-            throw netErr;
-          }
-          if (!resp.ok) {
-            const httpErr = new Error(`Error al cargar el archivo cifrado (HTTP ${resp.status}).`);
-            httpErr.code = 'NETWORK_ERROR';
-            throw httpErr;
-          }
+          try { resp = await fetch('./data/leads.enc.json?v=' + Date.now()); }
+          catch (_) { const e = new Error('No se pudo conectar para cargar el archivo cifrado.'); e.code = 'NETWORK_ERROR'; throw e; }
+          if (!resp.ok) { const e = new Error(`Error al cargar datos cifrados (HTTP ${resp.status}).`); e.code = 'NETWORK_ERROR'; throw e; }
           ENVELOPE = await resp.json();
         }
         const cleanPw = password.trim();
         const decrypted = await decryptEnvelope(ENVELOPE, cleanPw);
+        const syncToken = await deriveSyncToken(cleanPw, decrypted.sync_salt, decrypted.sync_iter);
         if (remember) {
           localStorage.setItem(STORAGE_KEY, cleanPw);
           sessionStorage.removeItem(STORAGE_KEY);
           if (window.PasswordCredential && navigator.credentials?.store) {
-            try {
-              const cred = new PasswordCredential({ id: 'panel-privado', name: 'Panel Privado', password: cleanPw });
-              await navigator.credentials.store(cred);
-            } catch (_) {}
+            try { await navigator.credentials.store(new PasswordCredential({ id: 'panel-privado', name: 'Panel Privado', password: cleanPw })); } catch (_) {}
           }
           try { history.pushState({ unlocked: true }, '', location.pathname); } catch (_) {}
         } else {
           sessionStorage.setItem(STORAGE_KEY, cleanPw);
           localStorage.removeItem(STORAGE_KEY);
         }
-        openDashboard(decrypted);
+        openDashboard(decrypted, syncToken);
       } catch (e) {
         if (e && (e.code === 'NETWORK_ERROR' || e.code === 'UNSUPPORTED_GZIP')) {
           errEl.textContent = e.message;
