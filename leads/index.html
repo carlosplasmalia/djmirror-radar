@@ -163,6 +163,7 @@
       display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px;
       border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap;
     }
+    .kpi-foot .pill { white-space: normal; max-width: 100%; line-height: 1.3; text-align: left; }
     .pill-cyan { background: rgba(46,230,214,0.14); color: var(--cyan); border: 1px solid rgba(46,230,214,0.28); }
     .pill-green { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.28); }
     .pill-gold { background: rgba(255,200,61,0.15); color: var(--gold); border: 1px solid rgba(255,200,61,0.3); }
@@ -468,6 +469,7 @@
               <select id="reviewSelect" class="sub-select">
                 <option value="ALL">Revisión: Todos</option>
                 <option value="PENDIENTE">⏳ Pendiente</option>
+                <option value="ENVIADO">✅ Ya enviado</option>
                 <option value="APROBADO">✅ Aprobado</option>
                 <option value="PAUSADO">⏸ Pausado</option>
                 <option value="DESCARTADO">❌ Descartado</option>
@@ -687,6 +689,14 @@
       return all;
     }
 
+    function isReplySent(c) {
+      return !!(c?.reply && (c.reply.delivery_state === 'ENVIADO' || c.reply.aprobacion_carlos === 'ENVIADO'));
+    }
+    function effectiveReviewStatus(c) {
+      if (isReplySent(c)) return 'ENVIADO';
+      return getReview(c.email).status;
+    }
+
     function getFilteredList() {
       let list = getBaseListForTab(state.tab);
       if (state.subFilter !== 'ALL') {
@@ -708,7 +718,7 @@
         list = list.filter((c) => (c.reply?.lang || c.lang) === state.lang);
       }
       if (state.reviewFilter !== 'ALL') {
-        list = list.filter((c) => getReview(c.email).status === state.reviewFilter);
+        list = list.filter((c) => effectiveReviewStatus(c) === state.reviewFilter);
       }
       if (state.search) {
         const q = state.search.toLowerCase();
@@ -752,7 +762,8 @@
     function renderKPIs() {
       const hl = DATA.headline;
       const qs = DATA.queue_summary;
-      const revs = Object.values(REVIEW);
+      const sentEmailSet = new Set((DATA.contacts || []).filter(isReplySent).map((c) => c.email.toLowerCase()));
+      const revs = Object.entries(REVIEW).filter(([em]) => !sentEmailSet.has(em.toLowerCase())).map(([, r]) => r);
       const nApr = revs.filter((r) => r.status === 'APROBADO').length;
       const nPau = revs.filter((r) => r.status === 'PAUSADO').length;
       const nDes = revs.filter((r) => r.status === 'DESCARTADO').length;
@@ -905,7 +916,7 @@
               <span class="pill ${cm.cls}">${cm.short}</span>
               ${msgCnt ? `<span class="pill pill-muted">💬 ${msgCnt}</span>` : ''}
               ${deliveryBadge(c.reply)}
-              ${reviewBadge(rev.status)}
+              ${isReplySent(c) ? '' : reviewBadge(rev.status)}
             </div>
           </button>
         `;
@@ -928,6 +939,7 @@
         : `<span class="pill pill-cyan">⚡ ${esc(prodPrimary)}</span>`;
       const locStr = [c.city, c.country_name || c.country_code].filter(Boolean).join(', ') || 'Ubicación desconocida';
       const rep = c.reply;
+      const contactIsSent = isReplySent(c);
 
       // 1. Alert banner if present
       const alertHtml = c.alert ? `
@@ -1198,10 +1210,14 @@
                 <button class="btn-ghost btn-sm" type="button" id="nextLeadBtn" ${idx >= total - 1 ? 'disabled' : ''}>Siguiente ➡️</button>
               </div>
               <div class="decision-bar" id="decisionBar">
+                ${contactIsSent
+                  ? '<span class="pill pill-green" style="padding:7px 12px;font-size:12px;">✅ Enviado · protegido por ledger</span>'
+                  : `
                 <button class="dec-btn ${rev.status === 'APROBADO' ? 'sel-APROBADO' : ''}" data-dec="APROBADO" type="button">✅ Aprobar</button>
                 <button class="dec-btn ${rev.status === 'PAUSADO' ? 'sel-PAUSADO' : ''}" data-dec="PAUSADO" type="button">⏸ Pausar</button>
                 <button class="dec-btn ${rev.status === 'DESCARTADO' ? 'sel-DESCARTADO' : ''}" data-dec="DESCARTADO" type="button">❌ Descartar</button>
                 <button class="dec-btn ${rev.status === 'PENDIENTE' ? 'sel-PENDIENTE' : ''}" data-dec="PENDIENTE" type="button">↩️ Pendiente</button>
+                `}
               </div>
             </div>
           </div>
@@ -1278,7 +1294,7 @@
           <div class="ctx-card">
             <div class="ctx-title">
               <span>💬 Historial de Correos (${histCountStr})</span>
-              <span class="pill ${c.email_meta.conv_status === 'PENDIENTE_RESPUESTA_CARLOS' ? 'pill-red' : 'pill-muted'}">${esc(c.email_meta.conv_status)}</span>
+              <span class="pill ${c.email_meta.conv_status === 'PENDIENTE_RESPUESTA_CARLOS' ? 'pill-red' : contactIsSent ? 'pill-green' : 'pill-muted'}">${esc(c.email_meta.conv_status)}</span>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:5px;">
               <span class="pill pill-muted">📥 IN: ${c.email_meta.inbound_count}</span>
@@ -1563,12 +1579,18 @@
 
     function openExportModal() {
       const lines = ['Email\tDecision_Carlos\tNotas_Carlos\tFecha'];
-      const entries = Object.entries(REVIEW).filter(([, v]) => v.status !== 'PENDIENTE' || (v.note || '').trim());
+      const sentEmailSet = new Set((DATA?.contacts || []).filter(isReplySent).map((c) => c.email.toLowerCase()));
+      const entries = Object.entries(REVIEW).filter(([em, v]) => {
+        const hasNote = !!(v.note || '').trim();
+        if (sentEmailSet.has(em.toLowerCase())) return hasNote;
+        return v.status !== 'PENDIENTE' || hasNote;
+      });
       if (!entries.length) {
         lines.push('(Todavía no has marcado ningún contacto como Aprobado/Pausado/Descartado ni añadido notas.)');
       } else {
         for (const [em, v] of entries) {
-          lines.push(`${em}\t${v.status}\t${(v.note || '').replace(/\t|\n/g, ' ')}\t${v.ts || ''}`);
+          const stOut = sentEmailSet.has(em.toLowerCase()) ? 'ENVIADO' : v.status;
+          lines.push(`${em}\t${stOut}\t${(v.note || '').replace(/\t|\n/g, ' ')}\t${v.ts || ''}`);
         }
       }
       document.getElementById('exportTa').value = lines.join('\n');
