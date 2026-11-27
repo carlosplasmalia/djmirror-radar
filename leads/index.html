@@ -522,6 +522,9 @@
         <div class="table-wrap" id="dirTableWrap"></div>
       </section>
 
+      <!-- Standalone Directory Inspector (for contacts outside Queue / Customers / Traktor tabs) -->
+      <section id="dirInspectorSection" class="detail-col" hidden></section>
+
       <footer id="footerText"></footer>
     </main>
   </div>
@@ -591,6 +594,7 @@
       selectedEmail: '',
       dirSearch: '',
       dirProduct: 'ALL',
+      allSelectedEmail: '',
     };
 
     function loadReview() {
@@ -653,6 +657,11 @@
         b64ToBytes(env.ct)
       );
       if (env.enc === 'gzip') {
+        if (typeof DecompressionStream === 'undefined') {
+          const err = new Error('Tu navegador no soporta DecompressionStream (requiere Safari 16.4+, Chrome 80+ o Firefox 113+).');
+          err.code = 'UNSUPPORTED_GZIP';
+          throw err;
+        }
         const ds = new DecompressionStream('gzip');
         const text = await new Response(new Blob([plainBuf]).stream().pipeThrough(ds)).text();
         return JSON.parse(text);
@@ -712,6 +721,7 @@
             ...(c.email_meta.topics || []),
             ...(c.email_meta.competitors || []),
             c.email_meta.last_subject || '',
+            c.crm_notes || '',
             c.reply?.subject || '',
             c.reply?.resumen_es_carlos || '',
           ].join(' ').toLowerCase();
@@ -748,6 +758,12 @@
       const nDes = revs.filter((r) => r.status === 'DESCARTADO').length;
       const r0u = qs.by_cohort?.R0_INBOUND_URGENTE_2026 || 0;
       const r0s = qs.by_cohort?.R0_INBOUND_SEGUIMIENTO_2026 || 0;
+      const urgCust = qs.urgent_customers_count ?? (DATA.contacts || []).filter((c) => c.is_customer && c.reply?.priority_tag === 'ACCION_URGENTE_CLIENTE').length;
+      const urgTotal = r0u + urgCust;
+      const sbPro = Number(DATA.cohorts_comparison?.stripe_buyers?.pro_audio_pct || 0);
+      const nbPro = Number(DATA.cohorts_comparison?.all_app_non_buyers?.pro_audio_pct || 0);
+      const multStr = nbPro > 0 ? (sbPro / nbPro).toFixed(1).replace('.', ',') + '×' : '—';
+      const medDays = hl.median_days_to_buy_stripe ?? '—';
 
       const cards = [
         {
@@ -765,18 +781,18 @@
           sub: `${fmtUsd(hl.stripe_one_time_revenue_usd)} único (${hl.stripe_one_time_buyers}) + ${fmtUsd(hl.stripe_subscription_arr_usd)}/año (${hl.stripe_subscription_buyers})`,
         },
         {
-          lbl: 'Urgentes Hoy (4)',
-          val: `${r0u} + 2`,
+          lbl: `Urgentes Hoy (${urgTotal})`,
+          val: `${r0u} + ${urgCust}`,
           badge: esc(qs.urgent_badge || 'Prioridad hoy'),
           cls: 'pill-red',
           sub: esc(qs.urgent_sub || 'Revisión prioritaria'),
         },
         {
           lbl: 'Multiplicador ICP #1',
-          val: '11,5×',
+          val: multStr,
           badge: 'HW Pro / Interfaz',
           cls: 'pill-gold',
-          sub: '60,0% compradores vs 5,2% no-compradores · mediana 9d',
+          sub: `${sbPro.toFixed(1).replace('.', ',')}% compradores vs ${nbPro.toFixed(1).replace('.', ',')}% no-compradores · mediana ${medDays}d`,
         },
         {
           lbl: 'Tu Revisión Local',
@@ -885,8 +901,8 @@
       renderDetail(sel, idx, list.length);
     }
 
-    function renderDetail(c, idx, total) {
-      const pane = document.getElementById('detailPane');
+    function renderDetail(c, idx, total, targetId = 'detailPane', fromDirectory = false) {
+      const pane = document.getElementById(targetId);
       const t = c.telemetry;
       const rev = getReview(c.email);
       const cm = COHORT_META[c.cohort] || { short: c.cohort, cls: 'pill-muted' };
@@ -908,6 +924,7 @@
 
       // 2. Hero Reply + Castilian Spanish Translation card
       let replyHtml = '';
+      let isLongMailto = false;
       if (rep) {
         const isAlreadyEs = rep.lang === 'ES';
         const kindBadge = rep.kind === 'REPESCA_PULSE'
@@ -918,7 +935,11 @@
         const guardBadge = rep.stealth_guard === 'PASS_ZERO_TELEMETRIA'
           ? '<span class="pill pill-green">🛡️ PASS CERO TELEMETRÍA</span>'
           : `<span class="pill pill-purple">ℹ️ ${esc(rep.stealth_guard)}</span>`;
-        const mailtoHref = `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(rep.subject)}&body=${encodeURIComponent(rep.body)}`;
+        const fullMailto = `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(rep.subject)}&body=${encodeURIComponent(rep.body)}`;
+        isLongMailto = fullMailto.length > 1950;
+        const mailtoHref = isLongMailto
+          ? `mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent(rep.subject)}`
+          : fullMailto;
         const wlHtml = (rep.whitelisted_terms || []).length
           ? rep.whitelisted_terms.map((w) => `<span class="pill pill-cyan">${esc(w)}</span>`).join(' ')
           : '<span class="pill pill-muted">Ninguno (100% stealth · sin referencias a telemetría ni hardware)</span>';
@@ -934,7 +955,7 @@
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
                 <button class="btn-ghost btn-sm" type="button" id="copySubjBtn">📋 Copiar asunto</button>
                 <button class="btn-ghost btn-sm" type="button" id="copyBodyBtn">📋 Copiar texto</button>
-                <a class="btn-ghost btn-sm" href="${mailtoHref}">✉️ Abrir en Mail</a>
+                <a class="btn-ghost btn-sm" id="openMailBtn" href="${mailtoHref}" ${isLongMailto ? 'title="Texto largo: al abrir Mail se copiará automáticamente el cuerpo al portapapeles para pegarlo con ⌘V"' : ''}>✉️ Abrir en Mail${isLongMailto ? ' (+ copiar texto)' : ''}</a>
               </div>
             </div>
 
@@ -1007,8 +1028,9 @@
         { lbl: `Trial caducado: ${t.trial_expired_events}`, on: t.trial_expired_events > 0, cls: 'warn' },
       ];
 
-      // 5. Billing, Keys & MailPoet
+      // 5. Billing, Keys, Key Requests, CRM Notes & MailPoet
       const keys = c.billing_and_keys?.keys || [];
+      const keyReqs = c.billing_and_keys?.key_requests || [];
       const payments = c.billing_and_keys?.payments || [];
       const mp = c.mailpoet || {};
       const keysHtml = keys.length ? `
@@ -1031,6 +1053,19 @@
         </div>
       ` : `<div style="font-size:12px;color:var(--muted);">Sin licencias Full/temporales emitidas en la BD de licencias.</div>`;
 
+      const keyReqsHtml = keyReqs.length ? `
+        <div style="margin-top:6px;font-size:11.5px;color:var(--muted);">
+          <strong style="color:var(--text);">Solicitudes en key_requests (${keyReqs.length}):</strong>
+          ${keyReqs.map((r) => `<span class="pill pill-muted mono">#${esc(r.id)} · ${esc(r.created_at)} · ${esc(r.edition || '-')} (${esc(r.status)})</span>`).join(' ')}
+        </div>
+      ` : `<div style="margin-top:4px;font-size:11.5px;color:var(--muted);">Solicitudes en <span class="mono">key_requests</span>: <strong>0</strong></div>`;
+
+      const payTypeBadge = (pt) => pt === 'subscription'
+        ? '<span class="pill pill-purple">Suscripción anual</span>'
+        : pt === 'one_time'
+          ? '<span class="pill pill-cyan">Pago único</span>'
+          : esc(pt || '—');
+
       const payHtml = payments.length ? `
         <div class="table-wrap" style="margin-top:6px;">
           <table>
@@ -1040,13 +1075,20 @@
                 <tr>
                   <td class="mono">${esc(p.date)}</td>
                   <td class="mono" style="color:var(--green);font-weight:700">${fmtUsd(p.amount_usd)}</td>
-                  <td>${esc(p.payment_type)}</td>
-                  <td class="mono">${esc(p.price_code)}</td>
-                  <td>${esc(p.status)}</td>
+                  <td>${payTypeBadge(p.payment_type)}</td>
+                  <td class="mono">${esc(p.price_code || '—')}</td>
+                  <td><span class="pill ${p.status === 'completed' ? 'pill-green' : 'pill-muted'}">${esc(p.status)}</span></td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
+        </div>
+      ` : '';
+
+      const crmNotesHtml = c.crm_notes ? `
+        <div style="margin-top:6px;background:rgba(46,230,214,0.07);border:1px solid rgba(46,230,214,0.24);border-radius:10px;padding:9px 11px;font-size:12px;">
+          <div style="font-size:11px;font-weight:800;color:var(--cyan);text-transform:uppercase;margin-bottom:4px;">📝 Notas CRM (WordPress)</div>
+          <div style="white-space:pre-wrap;line-height:1.45;color:#dbe4ff;">${esc(c.crm_notes)}</div>
         </div>
       ` : '';
 
@@ -1090,7 +1132,17 @@
         </div>
       ` : `<div style="color:var(--muted);font-size:13px;padding:8px 0;">Sin intercambio de correos previo registrado (será el primer contacto humano 1:1).</div>`;
 
+      const backToDirHtml = fromDirectory ? `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <button class="btn-ghost btn-sm" type="button" id="backToDirBtn">⬅️ Volver a tabla Todos (${total})</button>
+          <span style="font-size:12px;color:var(--muted);">Vista detallada desde el directorio completo (usa Anterior/Siguiente o ↑/↓ para recorrer la tabla filtrada)</span>
+        </div>
+      ` : '';
+      const histTotal = c.email_history_total || hist.length;
+      const histCountStr = histTotal > hist.length ? `${hist.length} de ${histTotal}` : `${hist.length}`;
+
       pane.innerHTML = `
+        ${backToDirHtml}
         <section class="card">
           <div class="detail-head">
             <div style="min-width:0;flex:1;">
@@ -1150,7 +1202,8 @@
             <div class="kv-list">
               <div class="kv-row"><span class="kv-k">Primera / Última vez</span><span class="kv-v mono">${esc(t.first_seen || '—')} → ${esc(t.last_seen || '—')}</span></div>
               <div class="kv-row"><span class="kv-k">Sesión máx.</span><span class="kv-v mono">${t.max_session_hours} h</span></div>
-              <div class="kv-row"><span class="kv-k">SO / Equipo</span><span class="kv-v">${esc(t.os_detail || t.os_family)} · ${t.cpu_cores || '?'} cores · ${t.ram_gb ? t.ram_gb + ' GB RAM' : 'RAM n/d'}</span></div>
+              <div class="kv-row"><span class="kv-k">SO / Equipo</span><span class="kv-v">${esc(t.os_detail || t.os_family)} · ${t.cpu_cores || '?'} cores · ${t.ram_gb ? t.ram_gb + ' GB RAM' : 'RAM n/d'}${t.disk_gb ? ' · ' + t.disk_gb + ' GB disco' : ''}</span></div>
+              ${t.timezone ? `<div class="kv-row"><span class="kv-k">Zona horaria PC</span><span class="kv-v mono">${esc(t.timezone)}</span></div>` : ''}
               <div class="kv-row"><span class="kv-k">Versiones Pulse</span><span class="kv-v mono">${esc((t.versions || []).join(', ') || 'Sin descarga Pulse')}</span></div>
               <div class="kv-row"><span class="kv-k">Máquinas (${t.machine_count})</span><span class="kv-v mono">${esc((t.machines_masked || []).join(', ') || '—')}</span></div>
               ${(t.alias_emails || []).length ? `<div class="kv-row"><span class="kv-k">Otros emails en su PC</span><span class="kv-v mono" style="color:var(--gold)">${esc(t.alias_emails.join(', '))}</span></div>` : ''}
@@ -1186,16 +1239,18 @@
               ${(mp.tags || []).length ? `<div class="kv-row"><span class="kv-k">Tags MailPoet</span><span class="kv-v">${mp.tags.map((x) => `<span class="pill pill-muted">${esc(x)}</span>`).join(' ')}</span></div>` : ''}
             </div>
             ${clicksHtml}
+            ${crmNotesHtml}
             <div style="margin-top:4px;">
               <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">🔑 Licencias en BD (claves enmascaradas)</div>
               ${keysHtml}
+              ${keyReqsHtml}
             </div>
             ${payHtml ? `<div style="margin-top:4px;"><div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">💵 Pagos Stripe</div>${payHtml}</div>` : ''}
           </div>
 
           <div class="ctx-card">
             <div class="ctx-title">
-              <span>💬 Historial de Correos (${hist.length})</span>
+              <span>💬 Historial de Correos (${histCountStr})</span>
               <span class="pill ${c.email_meta.conv_status === 'PENDIENTE_RESPUESTA_CARLOS' ? 'pill-red' : 'pill-muted'}">${esc(c.email_meta.conv_status)}</span>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:5px;">
@@ -1209,28 +1264,51 @@
         </section>
       `;
 
-      // Bind detail buttons
-      document.getElementById('copyEmailBtn').addEventListener('click', () => copyText(c.email, 'Email'));
-      if (rep) {
-        document.getElementById('copySubjBtn').addEventListener('click', () => copyText(rep.subject, 'Asunto'));
-        document.getElementById('copyBodyBtn').addEventListener('click', () => copyText(rep.body, 'Cuerpo del correo'));
+      // Bind detail buttons (scoped inside pane so workspace & directory inspector never collide!)
+      const qSel = (id) => pane.querySelector('#' + id);
+      if (fromDirectory && qSel('backToDirBtn')) {
+        qSel('backToDirBtn').addEventListener('click', () => {
+          state.allSelectedEmail = '';
+          renderAll();
+        });
       }
-      document.getElementById('prevLeadBtn').addEventListener('click', () => moveSelection(-1));
-      document.getElementById('nextLeadBtn').addEventListener('click', () => moveSelection(1));
-      document.getElementById('decisionBar').addEventListener('click', (e) => {
+      qSel('copyEmailBtn').addEventListener('click', () => copyText(c.email, 'Email'));
+      if (rep) {
+        qSel('copySubjBtn').addEventListener('click', () => copyText(rep.subject, 'Asunto'));
+        qSel('copyBodyBtn').addEventListener('click', () => copyText(rep.body, 'Cuerpo del correo'));
+        if (isLongMailto && qSel('openMailBtn')) {
+          qSel('openMailBtn').addEventListener('click', () => {
+            copyText(rep.body, 'Cuerpo completo (pégalo en Mail con ⌘V)');
+          });
+        }
+      }
+      qSel('prevLeadBtn').addEventListener('click', () => moveSelection(-1));
+      qSel('nextLeadBtn').addEventListener('click', () => moveSelection(1));
+      qSel('decisionBar').addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-dec]');
         if (!btn) return;
         setReview(c.email, { status: btn.dataset.dec });
         showToast(`Estado actualizado: ${btn.dataset.dec}`);
         renderKPIs();
-        renderListAndDetail();
+        if (fromDirectory) renderDirectoryInspector();
+        else renderListAndDetail();
       });
-      document.getElementById('reviewNoteInput').addEventListener('input', (e) => {
+      qSel('reviewNoteInput').addEventListener('input', (e) => {
         setReview(c.email, { note: e.target.value });
       });
     }
 
     function moveSelection(delta) {
+      if (state.tab === 'all' && state.allSelectedEmail) {
+        const list = getDirectoryRows();
+        if (!list.length) return;
+        const idx = list.findIndex((c) => c.email === state.allSelectedEmail);
+        const nextIdx = Math.max(0, Math.min(list.length - 1, (idx < 0 ? 0 : idx) + delta));
+        state.allSelectedEmail = list[nextIdx].email;
+        renderDirectoryInspector();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       const list = getFilteredList();
       if (!list.length) return;
       const idx = list.findIndex((c) => c.email === state.selectedEmail);
@@ -1347,13 +1425,20 @@
       `;
     }
 
-    function renderDirectory() {
+    function getDirectoryRows() {
       const q = state.dirSearch.toLowerCase();
-      const rows = (DATA.contacts || []).filter((c) => {
+      return (DATA.contacts || []).filter((c) => {
         if (state.dirProduct !== 'ALL' && c.product_line !== state.dirProduct) return false;
         if (!q) return true;
-        return [c.email, c.name, c.country_code, c.country_name, c.cohort, c.persona, c.license_category, c.highlight].join(' ').toLowerCase().includes(q);
+        return [
+          c.email, c.name, c.country_code, c.country_name, c.city, c.cohort,
+          c.persona, c.license_category, c.highlight, c.crm_notes || '',
+        ].join(' ').toLowerCase().includes(q);
       });
+    }
+
+    function renderDirectory() {
+      const rows = getDirectoryRows();
       const p1 = DATA.queue_summary?.product_primary_label || 'Principal';
       const p2 = DATA.queue_summary?.product_legacy_label || 'Legacy';
       document.getElementById('dirTableWrap').innerHTML = `
@@ -1385,6 +1470,18 @@
       `;
     }
 
+    function renderDirectoryInspector() {
+      const rows = getDirectoryRows();
+      const idx = rows.findIndex((x) => x.email === state.allSelectedEmail);
+      const c = idx >= 0 ? rows[idx] : (DATA.contacts || []).find((x) => x.email === state.allSelectedEmail);
+      if (!c) {
+        state.allSelectedEmail = '';
+        renderAll();
+        return;
+      }
+      renderDetail(c, idx >= 0 ? idx : 0, idx >= 0 ? rows.length : 1, 'dirInspectorSection', true);
+    }
+
     function openContactFromAnywhere(email) {
       const c = (DATA.contacts || []).find((x) => x.email === email);
       if (!c) return;
@@ -1392,17 +1489,14 @@
       else if (c.is_customer) state.tab = 'customers';
       else if (isTraktorOrOther(c)) state.tab = 'traktor';
       else {
-        // Show directly in detail by switching to queue/all or inspecting via customers? Better: render full inspector cleanly in a dedicated jump!
-        state.tab = 'queue';
-        state.subFilter = 'ALL';
-        state.lang = 'ALL';
-        state.reviewFilter = 'ALL';
-        state.search = '';
+        // Keep user cleanly inside the Directory tab with full inspector, working Prev/Next & review actions!
+        state.tab = 'all';
+        state.allSelectedEmail = email;
         renderAll();
-        renderDetail(c, 0, 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
+      state.allSelectedEmail = '';
       state.subFilter = 'ALL';
       state.lang = 'ALL';
       state.reviewFilter = 'ALL';
@@ -1421,15 +1515,20 @@
       const ws = document.getElementById('workspaceSection');
       const icpEl = document.getElementById('icpSection');
       const allEl = document.getElementById('allSection');
+      const dirInspEl = document.getElementById('dirInspectorSection');
+      const isDirInspecting = state.tab === 'all' && !!state.allSelectedEmail;
       ws.hidden = !['queue', 'customers', 'traktor'].includes(state.tab);
       icpEl.hidden = state.tab !== 'icp';
-      allEl.hidden = state.tab !== 'all';
+      allEl.hidden = state.tab !== 'all' || isDirInspecting;
+      dirInspEl.hidden = !isDirInspecting;
 
       if (!ws.hidden) {
         renderCohortChips();
         renderListAndDetail();
       } else if (state.tab === 'icp') {
         renderICPView();
+      } else if (isDirInspecting) {
+        renderDirectoryInspector();
       } else if (state.tab === 'all') {
         renderDirectory();
       }
@@ -1459,6 +1558,11 @@
       document.getElementById('updatedAt').textContent = `Actualizado: ${DATA.updated_at} · Datos BD/IMAP: ${DATA.data_extracted_at || 'hoy'}`;
       document.getElementById('sheetLink').href = DATA.sheet_url || '#';
       document.getElementById('rrssLink').href = DATA.rrss_url || '../';
+      const dirProdSel = document.getElementById('dirProductFilter');
+      if (dirProdSel && dirProdSel.options.length >= 3) {
+        dirProdSel.options[1].textContent = DATA.queue_summary?.product_primary_label || 'Producto principal';
+        dirProdSel.options[2].textContent = (DATA.queue_summary?.product_legacy_label || 'Legacy') + ' (otro producto)';
+      }
 
       if (!BOUND) {
         BOUND = true;
@@ -1468,6 +1572,7 @@
           state.tab = btn.dataset.tab;
           state.subFilter = 'ALL';
           state.selectedEmail = '';
+          state.allSelectedEmail = '';
           renderAll();
         });
         document.getElementById('cohortChips').addEventListener('click', (e) => {
@@ -1515,9 +1620,10 @@
         });
         document.getElementById('copyExportBtn').addEventListener('click', () => copyText(document.getElementById('exportTa').value, 'Decisiones de revisión'));
         document.getElementById('clearReviewBtn').addEventListener('click', () => {
+          if (!window.confirm('¿Seguro que quieres borrar todas tus marcas locales (Aprobado/Pausado/Descartado) y notas de este navegador?')) return;
           REVIEW = {}; saveReview();
           document.getElementById('exportModal').hidden = true;
-          renderKPIs(); renderListAndDetail();
+          renderAll();
           showToast('Marcas locales reiniciadas');
         });
         document.getElementById('lockBtn').addEventListener('click', lockDashboard);
@@ -1526,7 +1632,13 @@
           if (document.getElementById('appShell').hidden) return;
           const tag = (document.activeElement?.tagName || '').toLowerCase();
           if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-          if (!['queue', 'customers', 'traktor'].includes(state.tab)) return;
+          if (e.key === 'Escape' && state.tab === 'all' && state.allSelectedEmail) {
+            state.allSelectedEmail = '';
+            renderAll();
+            return;
+          }
+          const canMove = ['queue', 'customers', 'traktor'].includes(state.tab) || (state.tab === 'all' && !!state.allSelectedEmail);
+          if (!canMove) return;
           if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); moveSelection(1); }
           else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); moveSelection(-1); }
         });
@@ -1559,8 +1671,19 @@
       btn.textContent = 'Descifrando...';
       try {
         if (!ENVELOPE) {
-          const resp = await fetch('./data/leads.enc.json?v=' + Date.now());
-          if (!resp.ok) throw new Error('No se pudo cargar el archivo cifrado.');
+          let resp;
+          try {
+            resp = await fetch('./data/leads.enc.json?v=' + Date.now());
+          } catch (_) {
+            const netErr = new Error('No se pudo conectar para cargar el archivo cifrado. Comprueba tu conexión.');
+            netErr.code = 'NETWORK_ERROR';
+            throw netErr;
+          }
+          if (!resp.ok) {
+            const httpErr = new Error(`Error al cargar el archivo cifrado (HTTP ${resp.status}).`);
+            httpErr.code = 'NETWORK_ERROR';
+            throw httpErr;
+          }
           ENVELOPE = await resp.json();
         }
         const cleanPw = password.trim();
@@ -1581,9 +1704,13 @@
         }
         openDashboard(decrypted);
       } catch (e) {
-        localStorage.removeItem(STORAGE_KEY);
-        sessionStorage.removeItem(STORAGE_KEY);
-        errEl.textContent = 'Clave incorrecta. Comprueba mayúsculas y guiones.';
+        if (e && (e.code === 'NETWORK_ERROR' || e.code === 'UNSUPPORTED_GZIP')) {
+          errEl.textContent = e.message;
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+          sessionStorage.removeItem(STORAGE_KEY);
+          errEl.textContent = 'Clave incorrecta. Comprueba mayúsculas y guiones.';
+        }
         errEl.hidden = false;
       } finally {
         btn.disabled = false;
