@@ -757,9 +757,11 @@
       const nPau = revs.filter((r) => r.status === 'PAUSADO').length;
       const nDes = revs.filter((r) => r.status === 'DESCARTADO').length;
       const r0u = qs.by_cohort?.R0_INBOUND_URGENTE_2026 || 0;
+      const r0uPending = qs.r0_urgent_pending ?? r0u;
+      const sentCnt = qs.sent_count || 0;
       const r0s = qs.by_cohort?.R0_INBOUND_SEGUIMIENTO_2026 || 0;
       const urgCust = qs.urgent_customers_count ?? (DATA.contacts || []).filter((c) => c.is_customer && c.reply?.priority_tag === 'ACCION_URGENTE_CLIENTE').length;
-      const urgTotal = r0u + urgCust;
+      const urgTotal = r0uPending + urgCust;
       const sbPro = Number(DATA.cohorts_comparison?.stripe_buyers?.pro_audio_pct || 0);
       const nbPro = Number(DATA.cohorts_comparison?.all_app_non_buyers?.pro_audio_pct || 0);
       const multStr = nbPro > 0 ? (sbPro / nbPro).toFixed(1).replace('.', ',') + '×' : '—';
@@ -769,9 +771,9 @@
         {
           lbl: 'Cola Repesca Activa',
           val: fmt(qs.total),
-          badge: `${qs.pass_guard_count}/${qs.total} Stealth OK`,
-          cls: 'pill-cyan',
-          sub: `${r0u} R0 hoy · ${r0s} hilos 2026 · ${qs.en_count} EN / ${qs.es_count} ES`,
+          badge: sentCnt ? `${sentCnt} enviado(s) · ${qs.pass_guard_count}/${qs.total} OK` : `${qs.pass_guard_count}/${qs.total} Stealth OK`,
+          cls: sentCnt ? 'pill-green' : 'pill-cyan',
+          sub: `${r0uPending} R0 pend. · ${r0s} hilos 2026 · ${qs.en_count} EN / ${qs.es_count} ES`,
         },
         {
           lbl: 'Clientes & Ingresos',
@@ -782,7 +784,7 @@
         },
         {
           lbl: `Urgentes Hoy (${urgTotal})`,
-          val: `${r0u} + ${urgCust}`,
+          val: `${r0uPending} + ${urgCust}`,
           badge: esc(qs.urgent_badge || 'Prioridad hoy'),
           cls: 'pill-red',
           sub: esc(qs.urgent_sub || 'Revisión prioritaria'),
@@ -857,6 +859,18 @@
       return '';
     }
 
+    function deliveryBadge(rep) {
+      if (!rep) return '';
+      if (rep.delivery_state === 'ENVIADO' || rep.aprobacion_carlos === 'ENVIADO') {
+        const ts = rep.sent_at ? ' · ' + rep.sent_at.replace('T', ' ').slice(5, 16) : '';
+        return `<span class="pill pill-green">✅ ENVIADO${esc(ts)}</span>`;
+      }
+      if (rep.delivery_state === 'BORRADOR_IMAP_CREADO') {
+        return '<span class="pill pill-blue">📝 Borrador IMAP</span>';
+      }
+      return '';
+    }
+
     function renderListAndDetail() {
       const list = getFilteredList();
       document.getElementById('listCountLbl').textContent = `${list.length} contacto(s)`;
@@ -890,6 +904,7 @@
             <div class="li-tags">
               <span class="pill ${cm.cls}">${cm.short}</span>
               ${msgCnt ? `<span class="pill pill-muted">💬 ${msgCnt}</span>` : ''}
+              ${deliveryBadge(c.reply)}
               ${reviewBadge(rev.status)}
             </div>
           </button>
@@ -927,6 +942,7 @@
       let isLongMailto = false;
       if (rep) {
         const isAlreadyEs = rep.lang === 'ES';
+        const isSent = rep.delivery_state === 'ENVIADO' || rep.aprobacion_carlos === 'ENVIADO';
         const kindBadge = rep.kind === 'REPESCA_PULSE'
           ? '<span class="pill pill-cyan">🎯 REPESCA (STEALTH)</span>'
           : rep.kind === 'RETENCION_CLIENTE'
@@ -943,12 +959,22 @@
         const wlHtml = (rep.whitelisted_terms || []).length
           ? rep.whitelisted_terms.map((w) => `<span class="pill pill-cyan">${esc(w)}</span>`).join(' ')
           : '<span class="pill pill-muted">Ninguno (100% stealth · sin referencias a telemetría ni hardware)</span>';
+        const heroHeading = isSent
+          ? '✅ Correo ya enviado + 🇪🇸 Traducción al castellano'
+          : '📨 Qué vamos a responder + 🇪🇸 Traducción al castellano';
+        const leftPaneTitle = isSent
+          ? `✅ Correo ya enviado · Idioma: ${esc(rep.lang)} ${isAlreadyEs ? '(En castellano)' : ''}`
+          : `✉️ Correo exacto a enviar · Idioma: ${esc(rep.lang)} ${isAlreadyEs ? '(Ya en castellano)' : ''}`;
+        const esPaneBadge = isSent
+          ? `<span class="pill pill-green">Traducción fiel del enviado (${esc(rep.lang)})</span>`
+          : `<span class="pill pill-gold">Traducido de ${esc(rep.lang)}</span>`;
 
         replyHtml = `
           <section class="reply-hero">
             <div class="reply-hero-top">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span style="font-size:15px;font-weight:800;">📨 Qué vamos a responder + 🇪🇸 Traducción al castellano</span>
+                <span style="font-size:15px;font-weight:800;">${heroHeading}</span>
+                ${deliveryBadge(rep)}
                 ${kindBadge}
                 ${guardBadge}
               </div>
@@ -962,7 +988,7 @@
             <div class="reply-cols ${isAlreadyEs ? 'single-col' : ''}">
               <div class="mail-pane ${isAlreadyEs ? 'es-pane' : ''}">
                 <div class="mail-pane-head">
-                  <span class="mail-pane-title" style="color:${isAlreadyEs ? 'var(--gold)' : 'var(--cyan)'};">✉️ Correo exacto a enviar · Idioma: ${esc(rep.lang)} ${isAlreadyEs ? '(Ya en castellano)' : ''}</span>
+                  <span class="mail-pane-title" style="color:${isAlreadyEs ? 'var(--gold)' : isSent ? 'var(--green)' : 'var(--cyan)'};">${leftPaneTitle}</span>
                   <span class="mono" style="font-size:11px;color:var(--muted);">${rep.in_reply_to ? '↩️ En el mismo hilo' : '🆕 Correo nuevo'}</span>
                 </div>
                 <div style="font-size:11.5px;color:var(--muted);"><strong>Para:</strong> <span class="mono">${esc(c.email)}</span></div>
@@ -973,7 +999,7 @@
               <div class="mail-pane es-pane">
                 <div class="mail-pane-head">
                   <span class="mail-pane-title" style="color:var(--gold);">🇪🇸 Traducción completa al castellano</span>
-                  <span class="pill pill-gold">Traducido de ${esc(rep.lang)}</span>
+                  ${esPaneBadge}
                 </div>
                 <div style="font-size:11.5px;color:var(--muted);"><strong>Lectura íntegra para revisión</strong></div>
                 <div class="mail-subj"><strong>Asunto (ES):</strong> ${esc(rep.subject_es || rep.subject)}</div>
@@ -1158,6 +1184,7 @@
               <div class="dh-badges">
                 ${prodPill}
                 <span class="pill ${cm.cls}">${cm.short}</span>
+                ${deliveryBadge(rep)}
                 <span class="pill pill-muted">Persona: ${esc(c.persona)}</span>
                 <span class="pill pill-gold mono">ICP ${c.icp_score}/100</span>
                 <span class="pill pill-muted">${esc(c.license_category)}</span>
@@ -1461,7 +1488,7 @@
                   <td style="font-size:11px">${esc(c.telemetry.audio_tier)}</td>
                   <td class="mono">${c.telemetry.dmx_events} / ${c.telemetry.ndi_events + c.telemetry.spout_events}</td>
                   <td style="font-size:11px">${esc(c.email_meta.conv_status)}</td>
-                  <td>${c.reply ? '<span class="pill pill-green">Sí (ES+Orig)</span>' : '<span style="color:var(--muted)">—</span>'}</td>
+                  <td>${c.reply ? ((c.reply.delivery_state === 'ENVIADO' || c.reply.aprobacion_carlos === 'ENVIADO') ? '<span class="pill pill-green">✅ ENVIADO</span>' : '<span class="pill pill-cyan">Sí (ES+Orig)</span>') : '<span style="color:var(--muted)">—</span>'}</td>
                 </tr>
               `;
             }).join('')}
